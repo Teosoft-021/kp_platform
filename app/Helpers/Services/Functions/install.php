@@ -32,14 +32,14 @@ function createTheInstalledFile(bool $stopOnException = false): void
 {
 	$filePath = storage_path('installed');
 	$content = '';
-	
+
 	if (!file_exists($filePath)) {
 		try {
 			file_put_contents($filePath, $content);
 		} catch (Throwable $e) {
 		}
 	}
-	
+
 	if (!file_exists($filePath)) {
 		try {
 			$fp = fopen($filePath, 'w');
@@ -74,7 +74,7 @@ function appInstallFilesExist(): bool
 	if (appEnvFileExists() && file_exists(storage_path('installed'))) {
 		return true;
 	}
-	
+
 	return false;
 }
 
@@ -130,18 +130,18 @@ function updateIsAvailable(): bool
 	if (!appEnvFileExists()) {
 		return false;
 	}
-	
+
 	$updateIsAvailable = false;
-	
+
 	// Get eventual new version value & the current (installed) version value
 	$lastVersion = getLatestVersion();
 	$currentVersion = getCurrentVersion();
-	
+
 	// Check the update
 	if (version_compare($lastVersion, $currentVersion, '>')) {
 		$updateIsAvailable = true;
 	}
-	
+
 	return $updateIsAvailable;
 }
 
@@ -153,7 +153,7 @@ function updateIsAvailable(): bool
 function getCurrentVersion(): ?string
 {
 	$version = DotenvEditor::getValue('APP_VERSION');
-	
+
 	return checkAndUseSemVer($version);
 }
 
@@ -227,13 +227,13 @@ function getUpdateFileVersion(string $filePath): string
 function checkAndUseSemVer(?string $version): string
 {
 	$defaultSemver = '0.0.0';
-	
+
 	if (empty($version)) {
 		return $defaultSemver;
 	}
-	
+
 	$semver = null;
-	
+
 	if (empty($semver)) {
 		$numPattern = '([0-9]+)';
 		$hasValidFormat = preg_match('#^' . $numPattern . '\.' . $numPattern . '\.' . $numPattern . '$#', $version);
@@ -250,7 +250,7 @@ function checkAndUseSemVer(?string $version): string
 	if (empty($semver)) {
 		$semver = $defaultSemver;
 	}
-	
+
 	return $semver;
 }
 
@@ -271,7 +271,7 @@ function getRightPathsForCmd(
 ): ?string
 {
 	$splitCmd = explode(' ', $phpCmd, 2);
-	
+
 	// Get the script path
 	$scriptName = trim(Arr::first($splitCmd));
 	if ($scriptName == 'php') {
@@ -282,12 +282,12 @@ function getRightPathsForCmd(
 	$scriptPath = base_path($scriptName);
 	if (!file_exists($scriptPath)) return null;
 	$scriptPath = relativeAppPath($scriptPath);
-	
+
 	// Get the command
 	$cmd = trim(Arr::last($splitCmd));
 	$splitCmd = explode('>', $cmd, 2);
 	$cmd = trim(Arr::first($splitCmd));
-	
+
 	// Get PHP bin path
 	$phpBinaryDefaultPath = '/path/to/php';
 	$phpTrait = new class {
@@ -295,7 +295,7 @@ function getRightPathsForCmd(
 	};
 	$phpBinaryPath = $phpTrait->getPhpBinaryPath();
 	$requiredPhpVersion = $phpTrait->getComposerRequiredPhpVersion();
-	
+
 	// Get hint when the PHP binary path cannot be found
 	$hint = '';
 	if (empty($phpBinaryPath)) {
@@ -311,18 +311,18 @@ function getRightPathsForCmd(
 		}
 	}
 	$phpBinaryPath = !isDemoDomain() ? $phpBinaryPath : $phpBinaryDefaultPath;
-	
+
 	// Schedule
 	$schedule = is_null($schedule) ? '* * * * *' : $schedule;
-	
+
 	// Return
 	$return = is_null($return) ? '>> /dev/null 2>&1' : $return;
 	$return = (trim($schedule) == '') ? '' : $return;
-	
+
 	// Get cron job command
 	$cron = $schedule . ' ' . $phpBinaryPath . ' ' . $scriptPath . ' ' . $cmd . ' ' . $return;
 	$cron = trim($cron);
-	
+
 	// Build output
 	if ($wrapped) {
 		$out = '<div class="alert alert-light">';
@@ -332,7 +332,7 @@ function getRightPathsForCmd(
 		$out = '<code>' . $cron . '</code><br><br>';
 	}
 	$out .= $hint;
-	
+
 	return $out;
 }
 
@@ -346,13 +346,13 @@ function getHintForPhpCmd(): string
 		use PhpTrait;
 	};
 	$requiredPhpVersion = $phpTrait->getComposerRequiredPhpVersion();
-	
+
 	// Get hint for PHP binary path
 	$alertBg = isAdminPanel() ? 'alert-light-warning' : 'alert-warning';
 	$hint = '<div class="alert ' . $alertBg . '">';
 	$hint .= trans('messages.cron_jobs_hint', ['phpVersion' => $requiredPhpVersion]);
 	$hint .= '</div>';
-	
+
 	return $hint;
 }
 
@@ -361,9 +361,9 @@ function getHintForPhpCmd(): string
  * @param string|null $itemId
  * @return string
  */
-function getPurchaseCodeApiEndpoint(?string $purchaseCode, string $itemId = null): string
+function getPurchaseCodeApiEndpoint(?string $purchaseCode, ?string $itemId = null): string
 {
 	$baseUrl = getAsString(config('larapen.core.purchaseCodeCheckerUrl'));
-	
+
 	return $baseUrl . $purchaseCode . '&domain=' . getDomain() . '&item_id=' . $itemId;
 }

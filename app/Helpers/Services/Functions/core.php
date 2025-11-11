@@ -72,7 +72,7 @@ function getViewContent(string $view, array $data = [], array $mergeData = []): 
 function getViewContentIfExists(string $view, array $data = [], array $mergeData = []): string
 {
 	if (!view()->exists($view)) return '';
-	
+
 	return view($view, $data, $mergeData)->render();
 }
 
@@ -108,19 +108,19 @@ function addOptionsGroupJavaScript(
 			->prepend($namespaceBase)
 			->toString();
 	}
-	
+
 	$parts = explode('\\', $settingNamespace);
 	$modelName = $parts[2] ?? '';
 	$belongsTo = $parts[3] ?? '';
-	
+
 	$modelJsDirName = str($modelName)->kebab()->toString();
 	$belongsToJsDirName = !empty($belongsTo) ? '.' . $belongsTo : '';
 	$optionsGroupKey = str($groupClassName)->classBasename()->remove($modelName)->kebab()->toString();
-	
+
 	$view = 'admin.js.' . $modelJsDirName . $belongsToJsDirName . '.' . $optionsGroupKey;
-	
+
 	$js = getViewContentIfExists($view, $data);
-	
+
 	return array_merge($fields, [
 		[
 			'name'  => 'javascript',
@@ -165,9 +165,9 @@ function getCountriesFromArray(bool $raw = false): ?array
 {
 	$countries = new App\Helpers\Services\Localization\Helpers\Country();
 	$countries = $countries->all();
-	
+
 	if (empty($countries)) return null;
-	
+
 	$arr = [];
 	foreach ($countries as $code => $value) {
 		if (!$raw) {
@@ -179,7 +179,7 @@ function getCountriesFromArray(bool $raw = false): ?array
 		$row = ['value' => $code, 'text' => $value];
 		$arr[] = $row;
 	}
-	
+
 	return $arr;
 }
 
@@ -192,24 +192,24 @@ function getCountriesFromArray(bool $raw = false): ?array
 function getCountries(bool $includeNonActive = false): array
 {
 	$arr = [];
-	
+
 	// Get installed countries list
 	$countries = CountryHelper::getCountries($includeNonActive);
-	
+
 	if ($countries->count() > 0) {
 		foreach ($countries as $code => $country) {
 			// The country entry must be a Laravel Collection object
 			if (!$country instanceof Collection) {
 				$country = collect($country);
 			}
-			
+
 			// Get the country data
 			$code = $country->has('code') ? $country->get('code') : $code;
 			$name = $country->has('name') ? $country->get('name') : '';
 			$arr[$code] = $name;
 		}
 	}
-	
+
 	return $arr;
 }
 
@@ -221,7 +221,7 @@ function getCountriesCodes(): array
 	// Get the countries from the umpirsky database
 	$countries = getCountriesFromArray(raw: true);
 	$umpirskyCodes = collect($countries)->keyBy('value')->keys();
-	
+
 	// Get countries from the app's Geonames SQL files
 	$filesCodes = collect();
 	$filesDirPath = storage_path('database/geonames/countries/');
@@ -231,14 +231,14 @@ function getCountriesCodes(): array
 			->map(function ($item) {
 				$pathParts = pathinfo($item);
 				$code = $pathParts['filename'] ?? null;
-				
+
 				return !empty($code) ? strtoupper($code) : null;
 			})->flip()->keys();
 	}
-	
+
 	// All countries codes
 	$codes = $umpirskyCodes->merge($filesCodes)->unique();
-	
+
 	return $codes->toArray();
 }
 
@@ -251,12 +251,12 @@ function getCountryCodeRoutePattern(): string
 	$countriesCodes = collect(getCountriesCodes())->map(fn ($item) => strtolower($item));
 	$countryCodePattern = $countriesCodes->isNotEmpty() ? $countriesCodes->join('|') : null;
 	$countryCodePattern = !empty($countryCodePattern) ? $countryCodePattern : 'us';
-	
+
 	/*
 	 * NOTE:
 	 * '(?i:foo)' : Make 'foo' case-insensitive
 	 */
-	
+
 	return '(?i:' . $countryCodePattern . ')';
 }
 
@@ -299,18 +299,18 @@ function dmUrl(Collection|string|null $country, ?string $path = '/', bool $force
 	if (empty($path)) {
 		$path = '/';
 	}
-	
+
 	$country = getValidCountry($country);
 	if (empty($country)) {
 		return getAsString(url($path));
 	}
-	
+
 	// Clear the path
 	$path = ltrim($path, '/');
-	
+
 	// Get the country main language code
 	$langCode = getCountryMainLangCode($country);
-	
+
 	// Get the country main language path
 	$langPath = '';
 	if ($forceLocale) {
@@ -324,13 +324,13 @@ function dmUrl(Collection|string|null $country, ?string $path = '/', bool $force
 			}
 		}
 	}
-	
+
 	// Get the country domain data from the Domain Mapping plugin,
 	// And get a new URL related to domain, country language & given path
 	$domain = collect((array)config('domains'))->firstWhere('country_code', $country->get('code'));
 	if (!empty($domain['url'])) {
 		$path = preg_replace('#' . $country->get('code') . '/#ui', '', $path, 1);
-		
+
 		$url = rtrim($domain['url'], '/') . $langPath;
 		$url = $url . (!empty($path) ? '/' . $path : '');
 	} else {
@@ -340,7 +340,7 @@ function dmUrl(Collection|string|null $country, ?string $path = '/', bool $force
 			$url = $url . ('?country=' . $country->get('code'));
 		}
 	}
-	
+
 	return $url;
 }
 
@@ -364,17 +364,17 @@ function getValidCountry(Collection|string|null $country): ?Collection
 			return null;
 		}
 	}
-	
+
 	// Country collection is required to continue
 	if (!($country instanceof Collection)) {
 		return null;
 	}
-	
+
 	// Country collection code is required to continue
 	if (!$country->has('code')) {
 		return null;
 	}
-	
+
 	return $country;
 }
 
@@ -390,7 +390,7 @@ function getCountryMainLangCode(Collection|string|null $country): ?string
 	if (empty($country)) {
 		return null;
 	}
-	
+
 	// Get the country main language code
 	$langCode = null;
 	if ($country->has('lang')) {
@@ -411,7 +411,7 @@ function getCountryMainLangCode(Collection|string|null $country): ?string
 			}
 		}
 	}
-	
+
 	return $langCode;
 }
 
@@ -427,7 +427,7 @@ function applyDomainMappingConfig($countryCode): void
 	if (empty($countryCode)) {
 		return;
 	}
-	
+
 	if (config('plugins.domainmapping.installed')) {
 		/*
 		 * When the session is shared, the domain name and logo columns are disabled.
@@ -499,7 +499,7 @@ function isFromAdminPanel($url = null): bool
  * @param string|null $url
  * @return bool
  */
-function isAdminPanel(string $url = null): bool
+function isAdminPanel(?string $url = null): bool
 {
 	if (empty($url)) {
 		$isValid = (
@@ -511,7 +511,7 @@ function isAdminPanel(string $url = null): bool
 		try {
 			$urlPath = str(parse_url($url, PHP_URL_PATH))->start('/')->toString();
 			$adminUri = str(urlGen()->adminUri())->start('/')->toString();
-			
+
 			$isValid = (
 				str_starts_with($urlPath, $adminUri)
 				|| str_starts_with($urlPath, '/impersonate')
@@ -520,7 +520,7 @@ function isAdminPanel(string $url = null): bool
 			$isValid = false;
 		}
 	}
-	
+
 	return $isValid;
 }
 
@@ -530,14 +530,14 @@ function isAdminPanel(string $url = null): bool
  * @param string|null $url
  * @return bool
  */
-function isDevEnv(string $url = null): bool
+function isDevEnv(?string $url = null): bool
 {
 	if (empty($url)) {
 		$url = config('app.url');
 	}
-	
+
 	$domain = getDomain($url);
-	
+
 	return (
 		str_contains($domain, 'bedigit.local')
 		|| str_contains($domain, 'laraclassifier.local')
@@ -550,12 +550,12 @@ function isDevEnv(string $url = null): bool
  * @param string|null $url
  * @return bool
  */
-function isDemoEnv(string $url = null): bool
+function isDemoEnv(?string $url = null): bool
 {
 	if (empty($url)) {
 		$url = config('app.url');
 	}
-	
+
 	return (
 		getDomain($url) == config('larapen.core.demo.domain')
 		|| in_array(getHost($url), (array)config('larapen.core.demo.hosts'))
@@ -568,23 +568,23 @@ function isDemoEnv(string $url = null): bool
  * @param string|null $url
  * @return bool
  */
-function isDemoDomain(string $url = null): bool
+function isDemoDomain(?string $url = null): bool
 {
 	$isDemoDomain = isDemoEnv($url);
-	
+
 	if (!$isDemoDomain) {
 		return false;
 	}
-	
+
 	$guard = getAuthGuard();
 	$authUser = auth($guard)->check() ? auth($guard)->user() : null;
-	
+
 	if (!empty($authUser)) {
 		if (doesUserHaveStaffPermission($authUser) && isDemoSuperAdmin($authUser)) {
 			$isDemoDomain = false;
 		}
 	}
-	
+
 	return $isDemoDomain;
 }
 
@@ -597,7 +597,7 @@ function isDemoDomain(string $url = null): bool
 function isDemoEmailAddress(?string $email): bool
 {
 	if (empty($email)) return false;
-	
+
 	return in_array($email, getDemoEmailAddresses());
 }
 
@@ -609,7 +609,7 @@ function isDemoSuperAdmin($authUser): bool
 {
 	if (empty($authUser)) return false;
 	if (empty($authUser->email)) return false;
-	
+
 	return md5($authUser->email) == '5208f2db43b64766fe77fd0047dd9a22';
 }
 
@@ -625,27 +625,27 @@ function getDemoSkinColorImage($skin): ?string
 	if (!isset($skinsArray[$skin])) {
 		return null;
 	}
-	
+
 	$skinInfo = $skinsArray[$skin];
-	
+
 	$filename = $skin . '.png';
 	$filePath = public_path('vendor/demo/preview/images/icons/' . $filename);
 	$fileUrl = '/vendor/demo/preview/images/icons/' . $filename;
-	
+
 	if (!file_exists($filePath)) {
 		try {
-			
+
 			// Create a new empty image resource with red background
 			$image = FacadeImage::create(70, 35)->fill($skinInfo['color']);
-			
+
 			// Save the file in png format
 			$image->save($filePath);
-			
+
 		} catch (Throwable $e) {
 			return null;
 		}
 	}
-	
+
 	return $fileUrl;
 }
 
@@ -653,12 +653,12 @@ function getDemoSkinColorImage($skin): ?string
  * @param string|null $path
  * @return string
  */
-function getDemoFilesBasePath(string $path = null): string
+function getDemoFilesBasePath(?string $path = null): string
 {
 	$appSlug = config('larapen.core.item.slug');
 	$appSlug = !empty($appSlug) ? $appSlug . '/' : '';
 	$path = !empty($path) ? $path . '/' : '';
-	
+
 	return __DIR__ . '/../../../../../dataFactory/' . $appSlug . $path;
 }
 
@@ -670,18 +670,18 @@ function getDemoFilesBasePath(string $path = null): string
 function getCountryCodeFromPath(): ?string
 {
 	$countryCode = null;
-	
+
 	// With these URLs, the language code and the country code can be available in the segments
 	// (If the "Multi-countries URLs Optimization" is enabled)
 	if (isFromUrlThatCanContainCountryCode()) {
 		$countryCode = request()->segment(1);
 	}
-	
+
 	// With these URLs, the language code and the country code are available in the segments
 	if (isFromUrlAlwaysContainingCountryCode()) {
 		$countryCode = request()->segment(2);
 	}
-	
+
 	return $countryCode;
 }
 
@@ -702,7 +702,7 @@ function isFromUrlThatCanContainCountryCode(): bool
 			return true;
 		}
 	}
-	
+
 	return false;
 }
 
@@ -713,7 +713,7 @@ function isFromUrlThatCanContainCountryCode(): bool
  * @param string|null $url
  * @return bool
  */
-function isFromUrlAlwaysContainingCountryCode(string $url = null): bool
+function isFromUrlAlwaysContainingCountryCode(?string $url = null): bool
 {
 	if (empty($url)) {
 		$isValid = (
@@ -723,7 +723,7 @@ function isFromUrlAlwaysContainingCountryCode(string $url = null): bool
 	} else {
 		$isValid = (str_ends_with($url, '.xml'));
 	}
-	
+
 	return $isValid;
 }
 
@@ -739,19 +739,19 @@ function isUtf8mb4Available(): bool
 	$defaultConnection = config('database.default');
 	$databaseCharset = config("database.connections.{$defaultConnection}.charset");
 	$databaseCollation = config("database.connections.{$defaultConnection}.collation");
-	
+
 	// Get the 4-Byte charset & collations
 	$configDbEncodingKey = 'larapen.core.database.encoding';
 	$fourBytesCharset = config("{$configDbEncodingKey}.default.charset", 'utf8mb4');
 	$fourBytesCollations = config("{$configDbEncodingKey}.recommended.{$fourBytesCharset}");
 	$fourBytesCollations = $fourBytesCollations ?? ['utf8mb4_unicode_ci'];
-	
+
 	// Allow Emojis when the database charset is 'utf8mb4'
 	// and the database collation is 'utf8mb4_unicode_ci' or 'utf8mb4_0900_ai_ci'
 	if ($databaseCharset == $fourBytesCharset && in_array($databaseCollation, $fourBytesCollations)) {
 		return true;
 	}
-	
+
 	return false;
 }
 
@@ -797,7 +797,7 @@ function isWysiwygEnabled(): bool
 function htmlPurifierCleaner(?string $string): string
 {
 	if (empty($string)) return '';
-	
+
 	if (isWysiwygEnabled()) {
 		try {
 			$string = Purifier::clean($string);
@@ -806,20 +806,20 @@ function htmlPurifierCleaner(?string $string): string
 		$string = stripUtf8mb4CharsIfNotEnabled($string);
 	} else {
 		$string = multiLinesStringCleaner($string);
-		
+
 		if (request()->isMethod('get')) {
 			$string = nl2br($string);
 		}
 	}
-	
+
 	if (request()->isMethod('get')) {
 		$string = urlsToLinks($string);
 	}
-	
+
 	$string = (isFromApi() && !doesRequestIsFromWebClient())
 		? singleLineStringCleaner($string)
 		: $string;
-	
+
 	return getAsString($string);
 }
 
@@ -832,7 +832,7 @@ function htmlPurifierCleaner(?string $string): string
 function stripUtf8mb4CharsIfNotEnabled(?string $string): string
 {
 	if (empty($string)) return '';
-	
+
 	if (!isUtf8mb4Enabled()) {
 		$string = stripUtf8mb4Chars($string);
 	} else {
@@ -840,7 +840,7 @@ function stripUtf8mb4CharsIfNotEnabled(?string $string): string
 			$string = stripEmojis($string);
 		}
 	}
-	
+
 	return getAsString($string);
 }
 
@@ -854,7 +854,7 @@ function stripUtf8mb4CharsIfNotEnabled(?string $string): string
 function tagCleaner($value, bool $asArray = false): array|string|null
 {
 	$limit = (int)config('settings.listing_form.tags_limit', 15);
-	
+
 	return taggable($value, $limit, $asArray);
 }
 
@@ -866,7 +866,7 @@ function tagCleaner($value, bool $asArray = false): array|string|null
 function getCountrySpokenLanguages(): array
 {
 	$supportedLanguages = getSupportedLanguages();
-	
+
 	$spokenLanguages = config('country.languages');
 	$spokenLanguages = explode(',', $spokenLanguages);
 	if (config('settings.localization.show_country_spoken_languages') == 'active_with_en') {
@@ -875,21 +875,21 @@ function getCountrySpokenLanguages(): array
 	if (config('settings.localization.show_country_spoken_languages') == 'active_with_main') {
 		$spokenLanguages[] = strtolower(config('appLang.code'));
 	}
-	
+
 	if (empty($spokenLanguages)) return [];
-	
+
 	return collect($spokenLanguages)
 		->unique()
 		->map(function ($item) use ($supportedLanguages) {
 			if (empty($supportedLanguages)) return $item;
-			
+
 			foreach ($supportedLanguages as $code => $lang) {
 				if (str_starts_with($code, $item)) {
 					$item = $lang;
 					break; // Important
 				}
 			}
-			
+
 			return $item;
 		})
 		->filter(fn ($item) => is_array($item))
@@ -905,7 +905,7 @@ function getCountrySpokenLanguages(): array
 function getSupportedLanguages(): array
 {
 	$cacheExpiration = (int)config('settings.optimization.cache_expiration', 86400);
-	
+
 	// Get supported languages from database
 	try {
 		// Get all DB Languages
@@ -913,9 +913,9 @@ function getSupportedLanguages(): array
 		$supportedLanguages = cache()->remember($cacheId, $cacheExpiration, function () {
 			return Language::where('active', 1)->orderBy('lft')->get();
 		});
-		
+
 		$supportedLanguages = collect($supportedLanguages->toArray());
-		
+
 		if ($supportedLanguages->isNotEmpty()) {
 			$supportedLanguages = $supportedLanguages->keyBy('code');
 		}
@@ -927,7 +927,7 @@ function getSupportedLanguages(): array
 		 */
 		$supportedLanguages = collect();
 	}
-	
+
 	return $supportedLanguages->toArray();
 }
 
@@ -940,12 +940,12 @@ function getSupportedLanguages(): array
 function isAvailableLang(?string $code): bool
 {
 	$cacheExpiration = (int)config('settings.optimization.cache_expiration', 86400);
-	
+
 	$cacheId = 'language.' . $code;
 	$lang = cache()->remember($cacheId, $cacheExpiration, function () use ($code) {
 		return Language::where('code', '=', $code)->first();
 	});
-	
+
 	return !empty($lang);
 }
 
@@ -955,10 +955,10 @@ function isAvailableLang(?string $code): bool
 function detectLocale(): string
 {
 	$lang = detectLanguage();
-	
+
 	$defaultLocale = 'en_US';
 	$locale = !$lang->isEmpty() ? $lang->get('locale') : $defaultLocale;
-	
+
 	return getAsString($locale, $defaultLocale);
 }
 
@@ -968,7 +968,7 @@ function detectLocale(): string
 function detectLanguage(): Collection
 {
 	$obj = new App\Helpers\Services\Localization\Language();
-	
+
 	return $obj->find();
 }
 
@@ -990,24 +990,24 @@ function getPlural($number): float|int
  * @param string|null $locale
  * @return string
  */
-function getUrlPageByType(?string $type, string $locale = null): string
+function getUrlPageByType(?string $type, ?string $locale = null): string
 {
 	if (is_null($locale)) {
 		$locale = config('app.locale');
 	}
-	
+
 	$cacheExpiration = (int)config('settings.optimization.cache_expiration', 86400);
 	$cacheId = 'page.' . $locale . '.type.' . $type;
 	$page = cache()->remember($cacheId, $cacheExpiration, function () use ($type, $locale) {
 		$page = Page::type($type)->first();
-		
+
 		if (!empty($page)) {
 			$page->setLocale($locale);
 		}
-		
+
 		return $page;
 	});
-	
+
 	$linkTarget = '';
 	$linkRel = '';
 	if (!empty($page)) {
@@ -1024,7 +1024,7 @@ function getUrlPageByType(?string $type, string $locale = null): string
 		$url = '#';
 	}
 	$linkClass = ' class="' . linkClass() . '"';
-	
+
 	// Get attributes
 	return 'href="' . $url . '"' . $linkClass . $linkRel . $linkTarget;
 }
@@ -1036,7 +1036,7 @@ function getRecommendedFileFormats(): array
 {
 	$defaultFileFormats = ['pdf', 'doc', 'docx', 'rtf', 'rtx', 'ppt', 'pptx', 'odt', 'odp', 'wps'];
 	$imageInstalledFormats = getServerInstalledImageFormats();
-	
+
 	return array_merge($defaultFileFormats, $imageInstalledFormats);
 }
 
@@ -1046,13 +1046,13 @@ function getRecommendedFileFormats(): array
 function getAllowedFileFormats(): array
 {
 	$recommendedFormats = getRecommendedFileFormats();
-	
+
 	$formatList = config('settings.upload.file_types');
 	$formatList = normalizeSeparatedList($formatList);
-	
+
 	$formats = explode(',', $formatList);
 	$formats = array_filter($formats, fn ($item) => $item !== '');
-	
+
 	return !empty($formats) ? $formats : $recommendedFormats;
 }
 
@@ -1065,7 +1065,7 @@ function getAllowedFileFormatsHint(?string $typeGroup = 'file'): string
 	$formats = ($typeGroup == 'image')
 		? getServerAllowedImageFormats()
 		: getAllowedFileFormats();
-	
+
 	return collect($formats)->join(', ', t('_and_'));
 }
 
@@ -1080,22 +1080,22 @@ function getAllowedFileFormatsHint(?string $typeGroup = 'file'): string
 function normalizeSeparatedList(array|string|null $value, ?string $separator = ',', array|string $charsToGuard = ''): string
 {
 	if (empty($value)) return '';
-	
+
 	$separator = $separator ?: ',';
 	$badSeparators = [t('_and_'), t('_or_'), '|', '-', ';', '.', '/', '_', ' '];
-	
+
 	if (is_string($charsToGuard)) {
 		$charsToGuard = explode(',', $charsToGuard);
 	}
-	
+
 	if (is_string($value)) {
 		$badSeparators = array_diff($badSeparators, $charsToGuard);
 		$value = str_replace($badSeparators, $separator, $value);
 		$value = explode($separator, $value);
 	}
-	
+
 	$value = array_filter($value, fn ($item) => is_string($item) && $item !== '');
-	
+
 	return collect($value)->join($separator);
 }
 
@@ -1109,13 +1109,13 @@ function fileUrl(?string $filePath): string
 {
 	// Storage Disk Init.
 	$disk = StorageDisk::getDisk();
-	
+
 	try {
 		$url = $disk->url($filePath);
 	} catch (Throwable $e) {
 		$url = url('common/file?path=' . $filePath);
 	}
-	
+
 	return getAsString($url);
 }
 
@@ -1129,18 +1129,18 @@ function fileUrl(?string $filePath): string
 function privateFileUrl(?string $filePath, ?string $diskName = 'private'): string
 {
 	$queryString = 'path=' . $filePath;
-	
+
 	// For JC
 	if (str_starts_with($filePath, 'resumes/')) {
 		$diskName = 'private';
 	}
-	
+
 	if (!empty($diskName)) {
 		$queryString = 'disk=' . $diskName . '&' . $queryString;
 	}
-	
+
 	$url = url('common/file?' . $queryString);
-	
+
 	return getAsString($url);
 }
 
@@ -1156,15 +1156,15 @@ function generateImageHtml(?string $srcFallback, ?string $alt = '', ?string $src
 	$srcFallback = strval($srcFallback);
 	$alt = strval($alt);
 	$srcWebP = strval($srcWebP);
-	
+
 	// Initialize the attributes string
 	$attributesString = '';
-	
+
 	// Loop through the attributes array and build the attributes string
 	foreach ($attributes as $key => $value) {
 		$attributesString .= sprintf(' %s="%s"', htmlspecialchars($key), htmlspecialchars($value));
 	}
-	
+
 	// Check if WebP source is provided
 	if (!empty($srcWebP)) {
 		// Return the HTML code for <picture> element with WebP support
@@ -1202,7 +1202,7 @@ function getPictureVersion(bool $queryStringExists = false): string
 		$pictureVersion .= ($queryStringExists) ? '&' : '?';
 		$pictureVersion .= 'v=' . config('larapen.media.version');
 	}
-	
+
 	return $pictureVersion;
 }
 
@@ -1218,11 +1218,11 @@ function replaceGlobalPatterns(?string $string, bool $removeUnmatchedPatterns = 
 	$string = str_replace('{app.name}', config('app.name'), $string);
 	$string = str_replace('{country.name}', config('country.name'), $string);
 	$string = str_replace('{country}', config('country.name'), $string);
-	
+
 	if (config('settings.app.slogan')) {
 		$string = str_replace('{app.slogan}', config('settings.app.slogan'), $string);
 	}
-	
+
 	if (str_contains($string, '{count.listings}')) {
 		try {
 			$countPosts = Post::query()->inCountry()->has('country')->unarchived()->count();
@@ -1239,11 +1239,11 @@ function replaceGlobalPatterns(?string $string, bool $removeUnmatchedPatterns = 
 		}
 		$string = str_replace('{count.users}', $countUsers, $string);
 	}
-	
+
 	if ($removeUnmatchedPatterns) {
 		$string = removeUnmatchedPatterns($string);
 	}
-	
+
 	return getAsString($string);
 }
 
@@ -1256,7 +1256,7 @@ function replaceGlobalPatterns(?string $string, bool $removeUnmatchedPatterns = 
 function getMetaTag(?string $page): array
 {
 	$metaTag = ['title' => '', 'description' => '', 'keywords' => ''];
-	
+
 	// Check if the Domain Mapping plugin is available
 	if (config('plugins.domainmapping.installed')) {
 		$domainMappingClass = \extras\plugins\domainmapping\Domainmapping::class;
@@ -1267,11 +1267,11 @@ function getMetaTag(?string $page): array
 			}
 		}
 	}
-	
+
 	// Get the current Language
 	// $languageCode = config('lang.code', config('app.locale'));
 	$languageCode = config('app.locale', config('lang.code'));
-	
+
 	// Get the Page's MetaTag
 	$model = null;
 	try {
@@ -1279,33 +1279,33 @@ function getMetaTag(?string $page): array
 		$cacheId = 'metaTag.' . $languageCode . '.' . $page;
 		$model = cache()->remember($cacheId, $cacheExpiration, function () use ($languageCode, $page) {
 			$model = MetaTag::where('page', $page)->first(['title', 'description', 'keywords']);
-			
+
 			if (!empty($model)) {
 				$model->setLocale($languageCode);
 				$model = $model->toArray();
 			}
-			
+
 			return $model;
 		});
 	} catch (Throwable $e) {
 	}
-	
+
 	if (!empty($model)) {
 		$metaTag = $model;
-		
+
 		$metaTag['title'] = getColumnTranslation($metaTag['title'], $languageCode);
 		$metaTag['description'] = getColumnTranslation($metaTag['description'], $languageCode);
 		$metaTag['keywords'] = getColumnTranslation($metaTag['keywords'], $languageCode);
-		
+
 		$metaTag['title'] = replaceGlobalPatterns($metaTag['title'], false);
 		$metaTag['description'] = replaceGlobalPatterns($metaTag['description'], false);
 		$metaTag['keywords'] = mb_strtolower(replaceGlobalPatterns($metaTag['keywords'], false));
-		
+
 		$metaTag = normalizeMetaTagValues($metaTag);
-		
+
 		return array_values($metaTag);
 	}
-	
+
 	$pagesThatHaveTheirOwnDefaultMetaTags = [
 		'search',
 		'searchCategory',
@@ -1315,7 +1315,7 @@ function getMetaTag(?string $page): array
 		'listingDetails',
 		'staticPage',
 	];
-	
+
 	if (!in_array($page, $pagesThatHaveTheirOwnDefaultMetaTags)) {
 		if (config('settings.app.slogan')) {
 			$metaTag['title'] = config('app.name') . ' - ' . config('settings.app.slogan');
@@ -1324,16 +1324,16 @@ function getMetaTag(?string $page): array
 		}
 		$metaTag['description'] = $metaTag['title'];
 	}
-	
+
 	if (!is_array($metaTag)) {
 		$metaTag = [];
 	}
 	$metaTag['title'] = $metaTag['title'] ?? null;
 	$metaTag['description'] = $metaTag['description'] ?? null;
 	$metaTag['keywords'] = $metaTag['keywords'] ?? null;
-	
+
 	$metaTag = normalizeMetaTagValues($metaTag);
-	
+
 	return array_values($metaTag);
 }
 
@@ -1354,14 +1354,14 @@ function normalizeMetaTagValues(array $tags): array
  * @param string|null $countryCode
  * @return string
  */
-function getDistanceUnit(string $countryCode = null): string
+function getDistanceUnit(?string $countryCode = null): string
 {
 	if (empty($countryCode)) {
 		$countryCode = config('country.code');
 	}
 	$unit = Helper::getDistanceUnit($countryCode);
 	$unit = t($unit);
-	
+
 	return getAsString($unit);
 }
 
@@ -1371,10 +1371,10 @@ function getDistanceUnit(string $countryCode = null): string
  * @param string|null $skin
  * @return string|null
  */
-function getFrontSkin(string $skin = null): ?string
+function getFrontSkin(?string $skin = null): ?string
 {
 	$savedSkin = config('settings.style.skin', 'default');
-	
+
 	if (!empty($skin)) {
 		$skinsArray = getCachedReferrerList('skins');
 		if (!array_key_exists($skin, $skinsArray)) {
@@ -1383,7 +1383,7 @@ function getFrontSkin(string $skin = null): ?string
 	} else {
 		$skin = $savedSkin;
 	}
-	
+
 	return getAsStringOrNull($skin);
 }
 
@@ -1403,12 +1403,12 @@ function hashId($in, bool $toNum = false, bool $withPrefix = true, int $minHashL
 	if (!config('settings.seo.listing_hashed_id_enabled') && !isHashedId($in)) {
 		return $in;
 	}
-	
+
 	$hidPrefix = $withPrefix ? config('larapen.core.hashableIdPrefix') : '';
 	$hidPrefix = is_string($hidPrefix) ? $hidPrefix : '';
-	
+
 	$hashIds = new Hashids($salt, $minHashLength);
-	
+
 	if (!$toNum) {
 		$out = $hidPrefix . $hashIds->encode($in);
 	} else {
@@ -1418,7 +1418,7 @@ function hashId($in, bool $toNum = false, bool $withPrefix = true, int $minHashL
 			$out = $out[0];
 		}
 	}
-	
+
 	return !empty($out) ? $out : null;
 }
 
@@ -1431,7 +1431,7 @@ function isHashedId($in, int $minHashLength = 11): bool
 {
 	$hidPrefix = config('larapen.core.hashableIdPrefix');
 	$hidPrefixLength = is_string($hidPrefix) ? strlen($hidPrefix) : 0;
-	
+
 	return (
 		preg_match('/[a-z0-9A-Z]+/', $in)
 		&& (strlen($in) == ($minHashLength + $hidPrefixLength))
@@ -1447,17 +1447,17 @@ function regexSimilarRoutesPrefixes(): array
 {
 	$routes = (array)config('routes');
 	if (empty($routes)) return [];
-	
+
 	$prefixes = [];
 	foreach ($routes as $route) {
 		if (!isStringable($route)) continue;
-		
+
 		$prefix = head(explode('/', (string)$route));
 		if (!str_starts_with($prefix, '{')) {
 			$prefixes[] = $prefix;
 		}
 	}
-	
+
 	return array_unique($prefixes);
 }
 
@@ -1485,20 +1485,20 @@ function doesUserBrowserIs(?string $browserName = null): bool|string
 		'Firefox'           => 'Firefox', // Firefox can be checked after Chrome and Safari
 		'Internet Explorer' => ['MSIE', 'Trident/7'], // Check IE last
 	];
-	
+
 	foreach ($browsers as $name => $keywords) {
 		$keywords = (array)$keywords; // Ensure the keyword is an array
 		foreach ($keywords as $keyword) {
 			if (str_contains($userAgent, $keyword)) {
 				$detectedBrowser = $name;
-				
+
 				return $browserName
 					? strcasecmp($detectedBrowser, $browserName) === 0
 					: $detectedBrowser;
 			}
 		}
 	}
-	
+
 	return 'Unknown';
 }
 
@@ -1511,7 +1511,7 @@ function doesUserBrowserIs(?string $browserName = null): bool|string
 function getSitemapsIndexes(bool $htmlFormat = false): string
 {
 	$out = '';
-	
+
 	$countries = Country::transAll(CountryHelper::getCountries());
 	if (!$countries->isEmpty()) {
 		if ($htmlFormat) {
@@ -1522,19 +1522,19 @@ function getSitemapsIndexes(bool $htmlFormat = false): string
 			if (!$country instanceof Collection) {
 				continue;
 			}
-			
+
 			$country = CountryHelper::getCountryInfo($country->get('code'));
 			if ($country->isEmpty()) {
 				continue;
 			}
-			
+
 			/*
 			// Get the Country's Language Code
 			$countryLang = $country->has('lang') ? $country->get('lang') : collect();
 			$countryLang = ($countryLang instanceof Collection) ? $countryLang : collect();
 			$countryLangCode = $countryLang->has('code') ? $countryLang->get('code') : config('app.locale');
 			*/
-			
+
 			// Add the Sitemap Index
 			if ($htmlFormat) {
 				$out .= '<li>' . dmUrl($country, $country->get('icode') . '/sitemaps.xml') . '</li>';
@@ -1546,7 +1546,7 @@ function getSitemapsIndexes(bool $htmlFormat = false): string
 			$out .= '</ul>';
 		}
 	}
-	
+
 	return $out;
 }
 
@@ -1570,29 +1570,29 @@ function getDefaultRobotsTxtContent(): string
 	$out .= 'Disallow: /index.php' . "\n";
 	$out .= 'Disallow: /mix-manifest.json' . "\n";
 	$out .= 'Disallow: /*?display=*' . "\n"; // Listings list display mode
-	
+
 	$languages = getSupportedLanguages();
 	if (!empty($languages)) {
 		foreach ($languages as $code => $lang) {
 			$out .= 'Disallow: /locale/' . $code . "\n";
 		}
 	}
-	
+
 	$providers = ['facebook', 'linkedin', 'twitter', 'google'];
 	foreach ($providers as $provider) {
 		$out .= 'Disallow: /auth/connect/' . $provider . "\n";
 	}
-	
+
 	return $out;
 }
 
 function getCreateListingLinkInfo(): array
 {
 	$authUser = auth()->check() ? auth()->user() : null;
-	
+
 	$linkUrl = urlGen()->addPost();
 	$linkAttr = '';
-	
+
 	if (config('settings.listing_form.mandatory_package_selection') == '1') {
 		if (!empty($authUser)) {
 			/*
@@ -1613,13 +1613,13 @@ function getCreateListingLinkInfo(): array
 			$linkUrl = urlGen()->pricing();
 		}
 	}
-	
+
 	// Does guest have ability to create listings?
 	if (!doesGuestHaveAbilityToCreateListings($authUser)) {
 		$linkUrl = '#quickLogin';
 		$linkAttr = ' data-bs-toggle="modal" data-bs-target="#quickLogin"';
 	}
-	
+
 	return [$linkUrl, $linkAttr];
 }
 
@@ -1638,7 +1638,7 @@ function doesGuestHaveAbilityToCreateListings($authUser = null): bool
 		} catch (Throwable $e) {
 		}
 	}
-	
+
 	return (
 		!empty($authUser)
 		|| config('settings.listing_form.guest_can_submit_listings') == '1'
@@ -1656,13 +1656,13 @@ function doesGuestHaveAbilityToCreateListings($authUser = null): bool
 function genEmailContactBtn($post = null, bool $btnBlock = false, bool $iconOnly = false): string
 {
 	$post = is_array($post) ? Arr::toObject($post) : $post;
-	
+
 	$out = '';
-	
+
 	if (!isVerifiedPost($post)) {
 		return $out;
 	}
-	
+
 	$smsNotificationCanBeSent = (
 		isPhoneAsAuthFieldEnabled()
 		&& config('settings.sms.messenger_notifications') == '1'
@@ -1673,10 +1673,10 @@ function genEmailContactBtn($post = null, bool $btnBlock = false, bool $iconOnly
 		if ($iconOnly) {
 			$out = '<i class="fa-regular fa-envelope" style="color: #dadada"></i>';
 		}
-		
+
 		return $out;
 	}
-	
+
 	$btnLink = '#contactUser';
 	$btnClass = '';
 	if (!auth()->check()) {
@@ -1684,7 +1684,7 @@ function genEmailContactBtn($post = null, bool $btnBlock = false, bool $iconOnly
 			$btnLink = '#quickLogin';
 		}
 	}
-	
+
 	if ($iconOnly) {
 		$out .= '<a href="' . $btnLink . '" data-bs-toggle="modal" class="' . linkClass() . '">';
 		$out .= '<i class="fa-regular fa-envelope" data-bs-toggle="tooltip" title="' . t('Send a message') . '"></i>';
@@ -1692,13 +1692,13 @@ function genEmailContactBtn($post = null, bool $btnBlock = false, bool $iconOnly
 		if ($btnBlock) {
 			$btnClass = $btnClass . ' btn-block';
 		}
-		
+
 		$out .= '<a href="' . $btnLink . '" data-bs-toggle="modal" class="btn btn-secondary' . $btnClass . '">';
 		$out .= '<i class="fa-regular fa-envelope"></i> ';
 		$out .= t('Send a message');
 	}
 	$out .= '</a>';
-	
+
 	return $out;
 }
 
@@ -1712,7 +1712,7 @@ function genEmailContactBtn($post = null, bool $btnBlock = false, bool $iconOnly
 function genPhoneNumberBtn($post, bool $btnBlock = false): string
 {
 	$post = is_array($post) ? Arr::toObject($post) : $post;
-	
+
 	// Options
 	$isWhatsappBtnEnabled = (config('settings.listing_page.enable_whatsapp_btn') == '1');
 	$isPreFilledWhatsappMessageEnabled = (config('settings.listing_page.pre_filled_whatsapp_message') == '1');
@@ -1721,15 +1721,15 @@ function genPhoneNumberBtn($post, bool $btnBlock = false): string
 	$isPhoneNumberToImgEnabled = (config('settings.listing_page.convert_phone_number_to_img') == '1');
 	$isSecurityTipsEnabled = (config('settings.listing_page.show_security_tips') == '1');
 	$doesGuestCanContactAuthors = (config('settings.listing_page.guest_can_contact_authors') == '1');
-	
+
 	$out = '';
-	
+
 	if (empty($post->phone_intl) || $post->phone_hidden == 1) {
 		return $out;
 	}
-	
+
 	$dataPostId = ' data-post-id="' . $post->id . '"';
-	
+
 	$whatsAppPreFilledMessage = $isPreFilledWhatsappMessageEnabled
 		? '?text=' . rawurlencode(t('whatsapp_pre_filled_message', [
 			'url'     => urlGen()->post($post),
@@ -1738,13 +1738,13 @@ function genPhoneNumberBtn($post, bool $btnBlock = false): string
 		])) : '';
 	$whatsAppLink = 'https://wa.me/' . keepOnlyNumericChars($post->phone) . $whatsAppPreFilledMessage;
 	$waBtnClass = '';
-	
+
 	$btnLink = 'tel:' . $post->phone;
 	$btnAttr = '';
 	$btnClass = ' phoneBlock'; /* for the showPhone() JS function */
 	$btnHint = t('Click to see');
 	$phone = $post->phone_intl;
-	
+
 	if ($isHiddenPhoneNumberEnabled) {
 		$phoneToHide = normalizePhoneNumber($phone);
 		if ($hidePhoneNumberOption == '1') {
@@ -1759,10 +1759,10 @@ function genPhoneNumberBtn($post, bool $btnBlock = false): string
 		$btnLink = '';
 		$btnAttrTooltip = 'data-bs-toggle="tooltip" data-bs-placement="bottom" title="' . $btnHint . '"';
 		$btnClassTooltip = '';
-		
+
 		$btnAttr = $btnAttrTooltip;
 		$btnClass = $btnClass . $btnClassTooltip;
-		
+
 		$isWhatsappBtnEnabled = false;
 	} else {
 		$btnClass = '';
@@ -1774,19 +1774,19 @@ function genPhoneNumberBtn($post, bool $btnBlock = false): string
 			}
 		}
 	}
-	
+
 	if ($isSecurityTipsEnabled) {
 		/*
 		    Set multiple data-bs-toggle for link in Bootstrap
 			Tooltip + modal in button - Bootstrap
-			
+
 			Usage of '[rel="tooltip"]' as selector instead of '[data-bs-toggle="tooltip"]' for the tooltip,
 			and trigger that with on hover event from JS
 		*/
 		$btnAttrTooltip = 'rel="tooltip" data-bs-placement="bottom" title="' . $btnHint . '"';
 		$btnClassTooltip = '';
 		$btnAttrModal = 'data-bs-toggle="modal"';
-		
+
 		$btnLink = '#securityTips';
 		$btnAttr = $btnAttrModal . ' ' . $btnAttrTooltip;
 		$btnClass = ' phoneBlock'; /* for the showPhone() JS function */
@@ -1795,35 +1795,35 @@ function genPhoneNumberBtn($post, bool $btnBlock = false): string
 		}
 		$btnClass = $btnClass . ' ' . $btnClassTooltip;
 	}
-	
+
 	if (!auth()->check()) {
 		if (!$doesGuestCanContactAuthors) {
 			$btnAttrModal = 'data-bs-toggle="modal"';
-			
+
 			$phone = $btnHint;
 			$btnLink = '#quickLogin';
 			$btnAttr = $btnAttrModal;
 			$btnClass = '';
-			
+
 			$isWhatsappBtnEnabled = false;
 		}
 	}
-	
+
 	if ($btnBlock) {
 		$waBtnClass = $waBtnClass . ' btn-block';
 		$btnClass = $btnClass . ' btn-block';
 	}
-	
+
 	// Generate the Phone Number button
 	$class = 'btn btn-warning' . $btnClass;
 	$out .= '<a href="' . $btnLink . '"' . $dataPostId . ' ' . $btnAttr . ' class="' . $class . '">';
 	$out .= '<i class="fa-solid fa-mobile-screen-button"></i> ';
 	$out .= $phone;
 	$out .= '</a>';
-	
+
 	if ($isWhatsappBtnEnabled) {
 		$waBtnAttr = 'data-bs-toggle="tooltip" data-bs-placement="bottom" title="' . t('chat_on_whatsapp') . '"';
-		
+
 		// Generate the WhatsApp button
 		$class = 'btn btn-success' . $waBtnClass;
 		$out .= '<a href="' . $whatsAppLink . '"' . $dataPostId . ' ' . $waBtnAttr . ' target="_blank" class="' . $class . '">';
@@ -1831,7 +1831,7 @@ function genPhoneNumberBtn($post, bool $btnBlock = false): string
 		$out .= 'WhatsApp';
 		$out .= '</a>';
 	}
-	
+
 	return $out;
 }
 
@@ -1840,14 +1840,14 @@ function genPhoneNumberBtn($post, bool $btnBlock = false): string
  *
  * @param string|null $typeOfBackup
  */
-function setBackupConfig(string $typeOfBackup = null): void
+function setBackupConfig(?string $typeOfBackup = null): void
 {
 	// Get the current version value
 	$version = preg_replace('/[^\d+]/', '', config('version.app'));
-	
+
 	// All backup filename prefix
 	config()->set('backup.backup.destination.filename_prefix', 'site-v' . $version . '-');
-	
+
 	// Database backup
 	if ($typeOfBackup == 'database') {
 		config()->set('backup.backup.admin_flags', [
@@ -1856,7 +1856,7 @@ function setBackupConfig(string $typeOfBackup = null): void
 		]);
 		config()->set('backup.backup.destination.filename_prefix', 'database-v' . $version . '-');
 	}
-	
+
 	// Languages' files backup
 	if ($typeOfBackup == 'languages') {
 		$include = [
@@ -1871,7 +1871,7 @@ function setBackupConfig(string $typeOfBackup = null): void
 				}
 			}
 		}
-		
+
 		config()->set('backup.backup.admin_flags', [
 			'--disable-notifications' => true,
 			'--only-files'            => true,
@@ -1882,7 +1882,7 @@ function setBackupConfig(string $typeOfBackup = null): void
 		]);
 		config()->set('backup.backup.destination.filename_prefix', 'languages-');
 	}
-	
+
 	// Generated files backup
 	if ($typeOfBackup == 'files') {
 		config()->set('backup.backup.admin_flags', [
@@ -1899,7 +1899,7 @@ function setBackupConfig(string $typeOfBackup = null): void
 		]);
 		config()->set('backup.backup.destination.filename_prefix', 'files-');
 	}
-	
+
 	// App files backup
 	if ($typeOfBackup == 'app') {
 		config()->set('backup.backup.admin_flags', [
@@ -1952,9 +1952,9 @@ function setBackupConfig(string $typeOfBackup = null): void
 function isUserOnline($user): bool
 {
 	$user = (is_array($user)) ? Arr::toObject($user) : $user;
-	
+
 	$isOnline = false;
-	
+
 	if (!empty($user) && isset($user->id)) {
 		if (config('settings.optimization.cache_driver') == 'array') {
 			$isOnline = $user->p_is_online;
@@ -1962,10 +1962,10 @@ function isUserOnline($user): bool
 			$isOnline = cache()->store('file')->has('user-is-online-' . $user->id);
 		}
 	}
-	
+
 	// Allow only logged users to get the other users status
 	$guard = getAuthGuard();
-	
+
 	return auth($guard)->check() ? $isOnline : false;
 }
 
@@ -2017,44 +2017,44 @@ function addMissingTranslations($locale): void
 	if (empty($locale) || empty($masterLocale)) {
 		return;
 	}
-	
+
 	if ($locale == $masterLocale) {
 		return;
 	}
-	
+
 	// Update sections translatable options
 	$section = Section::where('name', 'search_form')->first();
 	if (!empty($section)) {
 		$values = $section->field_values;
-		
+
 		$masterKey = 'title_' . $masterLocale;
 		$localeKey = 'title_' . $locale;
 		if (isset($values[$masterKey])) {
 			$values[$localeKey] = $values[$masterKey];
 		}
-		
+
 		$masterKey = 'sub_title_' . $masterLocale;
 		$localeKey = 'sub_title_' . $locale;
 		if (isset($values[$masterKey])) {
 			$values[$localeKey] = $values[$masterKey];
 		}
-		
+
 		$section->field_values = $values;
-		
+
 		if ($section->isDirty()) {
 			$section->saveQuietly();
 		}
 	}
-	
+
 	// Update the translatable tables columns
 	$modelClasses = DBUtils::getAppModelClasses(translatable: true);
 	if (empty($modelClasses)) {
 		return;
 	}
-	
+
 	foreach ($modelClasses as $modelClass) {
 		$model = new $modelClass;
-		
+
 		// Get the translatable columns
 		$columns = method_exists($model, 'getTranslatableAttributes')
 			? $model->getTranslatableAttributes()
@@ -2062,19 +2062,19 @@ function addMissingTranslations($locale): void
 		if (empty($columns)) {
 			continue;
 		}
-		
+
 		$modelCollection = $modelClass::query()->withoutGlobalScopes();
 		if ($modelCollection->doesntExist()) {
 			continue;
 		}
-		
+
 		foreach ($modelCollection->cursor() as $item) {
 			foreach ($columns as $column) {
 				$value = $item->getTranslations($column);
-				
+
 				if (isset($value[$masterLocale])) {
 					$value[$locale] = $value[$masterLocale];
-					
+
 					$item->setTranslations($column, $value)
 						->saveQuietly();
 				}
@@ -2109,7 +2109,7 @@ function seoSiteVerification(): string
 			'content' => config('settings.seo.alexa_verify_id'),
 		],
 	];
-	
+
 	$out = '';
 	foreach ($engines as $engine) {
 		if (isset($engine['name'], $engine['content']) && $engine['content']) {
@@ -2120,7 +2120,7 @@ function seoSiteVerification(): string
 			}
 		}
 	}
-	
+
 	return $out;
 }
 
@@ -2133,7 +2133,7 @@ function relativeAppPath(?string $path): ?string
 	if (isDemoDomain()) {
 		return getRelativePath($path);
 	}
-	
+
 	return $path;
 }
 
@@ -2149,7 +2149,7 @@ function getFilterClearBtn(?string $url): ?string
 		$out .= '<i class="bi bi-x-lg"></i>';
 		$out .= '</a>';
 	}
-	
+
 	return $out;
 }
 
@@ -2164,13 +2164,13 @@ function isOldSocialAuthEnabled(?string $socialNetwork = null, array $settings =
 		$settings = config('settings.social_auth');
 		if (!is_array($settings)) return false;
 	}
-	
+
 	$isFacebookOauthEnabled = (data_get($settings, 'facebook_client_id') && data_get($settings, 'facebook_client_secret'));
 	$isLinkedInOauthEnabled = (data_get($settings, 'linkedin_client_id') && data_get($settings, 'linkedin_client_secret'));
 	$isTwitterOauth2Enabled = (data_get($settings, 'twitter_oauth_2_client_id') && data_get($settings, 'twitter_oauth_2_client_secret'));
 	$isTwitterOauth1Enabled = (data_get($settings, 'twitter_client_id') && data_get($settings, 'twitter_client_secret'));
 	$isGoogleOauthEnabled = (data_get($settings, 'google_client_id') && data_get($settings, 'google_client_secret'));
-	
+
 	$isSocialAuthEnabled = (
 		data_get($settings, 'social_login_activation')
 		&& (
@@ -2181,7 +2181,7 @@ function isOldSocialAuthEnabled(?string $socialNetwork = null, array $settings =
 			|| $isGoogleOauthEnabled
 		)
 	);
-	
+
 	$socialNetworkList = [
 		'facebook'      => $isFacebookOauthEnabled,
 		'linkedin'      => $isLinkedInOauthEnabled,
@@ -2189,11 +2189,11 @@ function isOldSocialAuthEnabled(?string $socialNetwork = null, array $settings =
 		'twitterOauth1' => $isTwitterOauth1Enabled,
 		'google'        => $isGoogleOauthEnabled,
 	];
-	
+
 	if (!empty($socialNetwork)) {
 		return (array_key_exists($socialNetwork, $socialNetworkList) && $socialNetworkList[$socialNetwork]);
 	}
-	
+
 	return $isSocialAuthEnabled;
 }
 
@@ -2208,7 +2208,7 @@ function isSocialSharesEnabled(?string $socialNetwork = null, array $settings = 
 		$settings = config('settings.social_share');
 		if (!is_array($settings)) return false;
 	}
-	
+
 	$isFacebookEnabled = (data_get($settings, 'facebook'));
 	$isTwitterEnabled = (data_get($settings, 'twitter'));
 	$isLinkedInEnabled = (data_get($settings, 'linkedin'));
@@ -2219,7 +2219,7 @@ function isSocialSharesEnabled(?string $socialNetwork = null, array $settings = 
 	$isPinterestEnabled = (data_get($settings, 'pinterest'));
 	$isVkEnabled = (data_get($settings, 'vk'));
 	$isTumblrEnabled = (data_get($settings, 'tumblr'));
-	
+
 	$isSocialSharesEnabled = (
 		$isFacebookEnabled
 		|| $isTwitterEnabled
@@ -2232,7 +2232,7 @@ function isSocialSharesEnabled(?string $socialNetwork = null, array $settings = 
 		|| $isVkEnabled
 		|| $isTumblrEnabled
 	);
-	
+
 	$socialNetworkList = [
 		'facebook'  => $isFacebookEnabled,
 		'twitter'   => $isTwitterEnabled,
@@ -2245,11 +2245,11 @@ function isSocialSharesEnabled(?string $socialNetwork = null, array $settings = 
 		'vk'        => $isVkEnabled,
 		'tumblr'    => $isTumblrEnabled,
 	];
-	
+
 	if (!empty($socialNetwork)) {
 		return (array_key_exists($socialNetwork, $socialNetworkList) && $socialNetworkList[$socialNetwork]);
 	}
-	
+
 	return $isSocialSharesEnabled;
 }
 
@@ -2264,7 +2264,7 @@ function getFormBorderRadiusCSS($formBorderRadius, $fieldsBorderRadius): string
 {
 	$searchFormOptions['form_border_radius'] = $formBorderRadius . 'px';
 	$searchFormOptions['fields_border_radius'] = $fieldsBorderRadius . 'px';
-	
+
 	$out = "\n";
 	if (config('lang.direction') == 'rtl') {
 		$out .= '#homepage .search-row .search-col:first-child > div {' . "\n";
@@ -2301,7 +2301,7 @@ function getFormBorderRadiusCSS($formBorderRadius, $fieldsBorderRadius): string
 		$out .= 'border-bottom-right-radius: ' . $searchFormOptions['fields_border_radius'] . ' !important;' . "\n";
 		$out .= '}' . "\n";
 	}
-	
+
 	$out .= '@media (max-width: 767px) {' . "\n";
 	$out .= '#homepage .search-row .search-col:first-child > div,' . "\n";
 	$out .= '#homepage .search-row .search-col:first-child .form-control,' . "\n";
@@ -2312,7 +2312,7 @@ function getFormBorderRadiusCSS($formBorderRadius, $fieldsBorderRadius): string
 	$out .= 'border-radius: ' . $searchFormOptions['form_border_radius'] . ' !important;' . "\n";
 	$out .= '}' . "\n";
 	$out .= '}' . "\n";
-	
+
 	return $out;
 }
 
@@ -2330,11 +2330,11 @@ function getUserSubscriptionFeatures($user, ?string $feature = null): array|int|
 		'picturesLimit'  => null,
 		'expirationTime' => null,
 	];
-	
+
 	if (empty($user)) {
 		return empty($feature) ? $array : ($array[$feature] ?? null);
 	}
-	
+
 	/*
 	 * With the 120 seconds of caching, we have to:
 	 * - Accept that the current payment will expire 2 minutes later than expected.
@@ -2350,28 +2350,28 @@ function getUserSubscriptionFeatures($user, ?string $feature = null): array|int|
 		 */
 		$isNotBasic = fn ($q) => $q->where('price', '>', 0);
 		$user->loadMissing(['payment' => fn ($q) => $q->withWhereHas('package', $isNotBasic)]);
-		
+
 		return $user;
 	});
-	
+
 	if (!empty($user->payment) && !empty($user->payment->package)) {
 		$basicPostsLimit = config('settings.listing_form.listings_limit', 5);
 		$basicPicturesLimit = config('settings.listing_form.pictures_limit', 5);
 		$basicExpirationTime = config('settings.cron.activated_listings_expiration', 30);
-		
+
 		$postsLimit = $user->payment->package->listings_limit ?? $basicPostsLimit;
 		$picturesLimit = $user->payment->package->pictures_limit ?? $basicPicturesLimit;
 		$expirationTime = $user->payment->package->expiration_time ?? $basicExpirationTime;
-		
+
 		$postsLimit = ($postsLimit > 0) ? $postsLimit : $basicPostsLimit;
 		$picturesLimit = ($picturesLimit > 0) ? $picturesLimit : $basicPicturesLimit;
 		$expirationTime = ($expirationTime > 0) ? $expirationTime : $basicExpirationTime;
-		
+
 		$array['postsLimit'] = $postsLimit;
 		$array['picturesLimit'] = $picturesLimit;
 		$array['expirationTime'] = $expirationTime;
 	}
-	
+
 	return empty($feature) ? $array : ($array[$feature] ?? null);
 }
 
@@ -2388,7 +2388,7 @@ function getPostPromotionFeatures(Post $post, ?string $feature = null): array|in
 		'picturesLimit'  => null,
 		'expirationTime' => null,
 	];
-	
+
 	/*
 	 * Important:
 	 * The basic packages can be saved as paid in the "payments" table by the OfflinePayment plugin
@@ -2396,21 +2396,21 @@ function getPostPromotionFeatures(Post $post, ?string $feature = null): array|in
 	 */
 	$isNotBasic = fn ($q) => $q->where('price', '>', 0);
 	$post->loadMissing(['payment' => fn ($q) => $q->withWhereHas('package', $isNotBasic)]);
-	
+
 	if (!empty($post->payment) && !empty($post->payment->package)) {
 		$basicPicturesLimit = config('settings.listing_form.pictures_limit', 5);
 		$basicExpirationTime = config('settings.cron.activated_listings_expiration', 30);
-		
+
 		$picturesLimit = $post->payment->package->pictures_limit ?? $basicPicturesLimit;
 		$expirationTime = $post->payment->package->expiration_time ?? $basicExpirationTime;
-		
+
 		$picturesLimit = ($picturesLimit > 0) ? $picturesLimit : $basicPicturesLimit;
 		$expirationTime = ($expirationTime > 0) ? $expirationTime : $basicExpirationTime;
-		
+
 		$array['picturesLimit'] = $picturesLimit;
 		$array['expirationTime'] = $expirationTime;
 	}
-	
+
 	return empty($feature) ? $array : ($array[$feature] ?? null);
 }
 
@@ -2422,28 +2422,28 @@ function getPostPromotionFeatures(Post $post, ?string $feature = null): array|in
 function requestPackageId(): ?int
 {
 	$packageId = null;
-	
+
 	if (request()->filled('package_id')) {
 		$packageId = request()->input('package_id');
 	}
-	
+
 	if (empty($packageId)) {
 		if (request()->filled('packageId')) {
 			$packageId = request()->query('packageId');
 		}
 	}
-	
+
 	if (empty($packageId)) {
 		$packageId = (int)old('package_id');
 		if (!empty($packageId)) {
 			if (!request()->has('package_id')) {
 				request()->request->add(['package_id' => $packageId]);
 			}
-			
+
 			return $packageId;
 		}
 	}
-	
+
 	return (int)$packageId;
 }
 
@@ -2457,7 +2457,7 @@ function getPackageById($packageId): ?Package
 {
 	$cacheExpiration = (int)config('settings.optimization.cache_expiration');
 	$cacheId = 'package.id.' . $packageId . '.' . config('app.locale');
-	
+
 	return cache()->remember($cacheId, $cacheExpiration, function () use ($packageId) {
 		return Package::with(['currency'])->where('id', $packageId)->first();
 	});
@@ -2475,9 +2475,9 @@ function doesNoPackageOrPremiumOneSelected(Package|array|null $package = null): 
 		$packageId = request()->query('packageId');
 		$package = !empty($packageId) ? getPackageById($packageId) : null;
 	}
-	
+
 	$packagePrice = !empty($package) ? data_get($package, 'price') : null;
-	
+
 	return (is_null($packagePrice) || (is_numeric($packagePrice) && $packagePrice > 0));
 }
 
@@ -2494,7 +2494,7 @@ function getRequestPackageType(): ?string
 			routeActionHas(PostController::class)
 			|| routeActionHas(getClassNamespaceName(ReportController::class))
 		);
-	
+
 	$isSubscripting = isFromApi()
 		? routeActionHas(UserController::class)
 		: (
@@ -2502,7 +2502,7 @@ function getRequestPackageType(): ?string
 			|| routeActionHas(getClassNamespaceName(RegisterController::class))
 			|| routeActionHas(getClassNamespaceName(AccountBaseController::class))
 		);
-	
+
 	$type = null;
 	if ($isPromoting) {
 		$type = 'promotion';
@@ -2510,7 +2510,7 @@ function getRequestPackageType(): ?string
 	if ($isSubscripting) {
 		$type = 'subscription';
 	}
-	
+
 	return $type;
 }
 
@@ -2546,7 +2546,7 @@ function getDisplayMode(?string $key): ?string
 function isValidDisplayModeKey(?string $key): bool
 {
 	$modes = getDisplayModeList();
-	
+
 	return (!empty($key) && !empty($modes[$key]));
 }
 
@@ -2557,7 +2557,7 @@ function isValidDisplayModeKey(?string $key): bool
 function isValidDisplayMode(?string $mode): bool
 {
 	$flipped = array_flip(getDisplayModeList());
-	
+
 	return (!empty($mode) && in_array($mode, array_keys($flipped)));
 }
 
@@ -2593,9 +2593,9 @@ function getCountryFlagUrl(?string $countryCode, ?int $size = 16): ?string
 {
 	if (empty($countryCode)) return null;
 	$size = !empty($size) ? $size : 16;
-	
+
 	$flagUrl = null;
-	
+
 	$shape = config('settings.localization.country_flag_shape', 'rectangle');
 	if ($shape == 'rectangle') {
 		$missingIslandFlags = [
@@ -2619,12 +2619,12 @@ function getCountryFlagUrl(?string $countryCode, ?int $size = 16): ?string
 		];
 	}
 	$code = $missingIslandFlags[$countryCode] ?? $countryCode;
-	
+
 	$flagPath = 'images/flags/' . $shape . '/' . $size . '/' . strtolower($code) . '.png';
 	if (file_exists(public_path($flagPath))) {
 		$flagUrl = url($flagPath) . getPictureVersion();
 	}
-	
+
 	return getAsStringOrNull($flagUrl);
 }
 
@@ -2639,22 +2639,22 @@ function getCountryFlagUrl(?string $countryCode, ?int $size = 16): ?string
 function getNumberOfItemsPerPage(?string $entity = null, $perPage = null, ?int $default = null): float|int
 {
 	$entity = getAsString($entity);
-	
+
 	$isPerPageValid = (is_int($perPage) && $perPage > 0);
 	if (!$isPerPageValid) {
 		$defaultIntValue = 10;
 		$default = (ctype_digit($default) || is_int($default)) ? (int)$default : null;
 		$default = (is_int($default) && $default > 0) ? $default : $defaultIntValue;
-		
+
 		$perPage = config('settings.pagination.per_page', $default);
 		$perPage = config('settings.pagination.' . $entity . '_per_page', $perPage);
 		$perPage = (ctype_digit($perPage) || is_int($perPage)) ? (int)$perPage : $default;
-		
+
 		$perPage = (is_int($perPage) && $perPage > 0)
 			? $perPage
 			: $default;
 	}
-	
+
 	return Number::clamp($perPage, min: 1, max: getMaxItemsPerPage($entity));
 }
 
@@ -2673,10 +2673,10 @@ function getMaxItemsPerPage(?string $entity = null): float|int
 	$maxItemsPerPage = (is_numeric($maxItemsPerPage) && $maxItemsPerPage >= $defaultMaxItemsPerPage)
 		? $maxItemsPerPage
 		: $defaultMaxItemsPerPage;
-	
+
 	$maxItemsPerPage = ($entity == 'subadmin1_select') ? 200 : $maxItemsPerPage;
 	$maxItemsPerPage = ($entity == 'subadmin2_select') ? 5000 : $maxItemsPerPage;
-	
+
 	return Number::clamp($maxItemsPerPage, min: $maxItemsPerPage, max: 100000);
 }
 
@@ -2689,7 +2689,7 @@ function getMaxItemsPerPage(?string $entity = null): float|int
 function getNumberOfItemsToTake(?string $entity = null): float|int
 {
 	$limit = config('settings.pagination.' . $entity . '_limit');
-	
+
 	return getNumberOfItemsPerPage($entity, $limit);
 }
 
@@ -2711,29 +2711,29 @@ function isSubscriptionAvailable(): bool
 function getListingDates($post, ?string $status): array
 {
 	$dates = [];
-	
+
 	if (empty($status)) return $dates;
-	
+
 	if (in_array($status, ['list', 'pending-approval'])) {
 		$createdAtFormatted = data_get($post, 'created_at_formatted');
 		$updatedAtFormatted = data_get($post, 'updated_at_formatted');
-		
+
 		if (!empty($updatedAtFormatted)) {
 			if ($createdAtFormatted != $updatedAtFormatted) {
 				$dates[t('updated_on')] = t('updated_on') . ': ' . $updatedAtFormatted;
 			}
 		}
-		
+
 		if (!empty($createdAtFormatted)) {
 			$dates[t('created_on')] = t('created_on') . ': ' . $createdAtFormatted;
 		}
 	}
-	
+
 	if ($status == 'archived') {
 		$createdAtFormatted = data_get($post, 'created_at_formatted');
 		$archivedManuallyAtFormatted = data_get($post, 'archived_manually_at_formatted');
 		$archivedAtFormatted = data_get($post, 'archived_at_formatted');
-		
+
 		if (!empty($archivedManuallyAtFormatted)) {
 			$dates[t('archived_manually_on')] = t('archived_manually_on')
 				. ': ' . $archivedManuallyAtFormatted;
@@ -2742,25 +2742,25 @@ function getListingDates($post, ?string $status): array
 				$dates[t('archived_on')] = t('archived_on') . ': ' . $archivedAtFormatted;
 			}
 		}
-		
+
 		if (!empty($createdAtFormatted)) {
 			$dates[t('created_on')] = t('created_on') . ': ' . $createdAtFormatted;
 		}
 	}
-	
+
 	if ($status == 'favourite') {
 		$publishedAtFormatted = data_get($post, 'created_at_formatted');
 		$savedAtFormatted = data_get($post, 'saved_at_formatted');
-		
+
 		if (!empty($savedAtFormatted)) {
 			$dates[t('saved_on')] = t('saved_on') . ': ' . $savedAtFormatted;
 		}
-		
+
 		if (!empty($publishedAtFormatted)) {
 			$dates[t('published_on')] = t('published_on') . ': ' . $publishedAtFormatted;
 		}
 	}
-	
+
 	return $dates;
 }
 
@@ -2815,17 +2815,17 @@ function hasTemporaryPath(string $filePath): bool
 function getItemAddressForMap($city): ?string
 {
 	$admin1 = data_get($city, 'subAdmin1');
-	
+
 	$countryName = config('country.name');
 	$admin1Name = data_get($admin1, 'name');
 	$cityName = data_get($city, 'name');
-	
+
 	$cityName = !empty($admin1Name)
 		? (!empty($cityName) ? $cityName . ',' . $admin1Name : $admin1Name)
 		: $cityName;
-	
+
 	$address = !empty($cityName) ? $cityName . ',' . $countryName : $countryName;
-	
+
 	return getAsStringOrNull($address);
 }
 
@@ -2848,7 +2848,7 @@ function getGoogleMapsApiUrl(
 ): ?string
 {
 	if (empty($apiKey)) return null;
-	
+
 	$baseUrl = 'https://maps.googleapis.com/maps/api/js';
 	$query = [
 		'key'      => $apiKey,
@@ -2862,9 +2862,9 @@ function getGoogleMapsApiUrl(
 		$query['v'] = 'beta';
 		$query['libraries'] = 'marker';
 	}
-	
+
 	$url = $baseUrl . '?' . Arr::query($query);
-	
+
 	return $decode ? html_entity_decode($url) : $url;
 }
 
@@ -2892,7 +2892,7 @@ function getGoogleMapsEmbedApiUrl(?string $apiKey, ?string $q, bool $decode = tr
 		'language' => getLangTag(app()->getLocale()),
 	];
 	$url = $baseUrl . '?' . Arr::query($query);
-	
+
 	return $decode ? html_entity_decode($url) : $url;
 }
 
@@ -2932,7 +2932,7 @@ function getSelectedEntryIds($entryId = null, array|string|null $entryIdList = [
 			}
 		}
 	}
-	
+
 	return $asString ? implode(',', $array) : $array;
 }
 
@@ -2944,7 +2944,7 @@ function linkClass(?string $color = 'primary'): string
 {
 	$colorClass = BootstrapColor::Link->getColorClass($color);
 	$altBaseClass = BootstrapColor::Link->altBase();
-	
+
 	return "$colorClass $altBaseClass";
 }
 
@@ -2954,7 +2954,7 @@ function linkClass(?string $color = 'primary'): string
 function unsavedFormGuard(): string
 {
 	$isEnabled = (config('settings.security.unsaved_form_guard') == '1');
-	
+
 	return $isEnabled ? 'unsaved-guard' : '';
 }
 
@@ -3009,13 +3009,13 @@ function getSerpOffcanvasBreakpoint(?string $breakpointKey = null, bool $isLeftS
 			'size'                    => 7680,              // 8K:7680 | 6K:6144 | 4K:4096
 		],
 	];
-	
+
 	if (empty($breakpointKey)) {
 		return collect($pageBreakpointList)
 			->map(fn ($item, $key) => $item['label'] ?? $key)
 			->toArray();
 	}
-	
+
 	return $pageBreakpointList[$breakpointKey] ?? [];
 }
 
@@ -3030,11 +3030,11 @@ function getFieldIdentifier(?string $id = null, ?string $name = null, ?string $p
 {
 	$dotSepName = arrayFieldToDotNotation($name);
 	$fallbackId = str_replace('.', $separator, $dotSepName);
-	
+
 	$id = !empty($id) ? $id : $fallbackId;
 	$id = str_replace(['_', '-', ' '], $separator, $id);
-	
+
 	$prefix = (!empty($prefix) && !str_ends_with($prefix, $separator)) ? "{$prefix}{$separator}" : '';
-	
+
 	return "{$prefix}{$id}";
 }

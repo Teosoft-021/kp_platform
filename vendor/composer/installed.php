@@ -1,9 +1,9 @@
 <?php return array(
     'root' => array(
         'name' => 'laraclassifier/laraclassifier',
-        'pretty_version' => 'dev-master',
-        'version' => 'dev-master',
-        'reference' => '01a46220868739ccda742b5d5393aa82849c4445',
+        'pretty_version' => 'dev-develop',
+        'version' => 'dev-develop',
+        'reference' => 'a53cbf2bef094435c1cabe5d28cc8fca0712d38e',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -623,9 +623,9 @@
             'dev_requirement' => false,
         ),
         'laraclassifier/laraclassifier' => array(
-            'pretty_version' => 'dev-master',
-            'version' => 'dev-master',
-            'reference' => '01a46220868739ccda742b5d5393aa82849c4445',
+            'pretty_version' => 'dev-develop',
+            'version' => 'dev-develop',
+            'reference' => 'a53cbf2bef094435c1cabe5d28cc8fca0712d38e',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
@@ -1301,8 +1301,8 @@
         'psr/container-implementation' => array(
             'dev_requirement' => false,
             'provided' => array(
-                0 => '^1.0',
-                1 => '1.1|2.0',
+                0 => '1.1|2.0',
+                1 => '^1.0',
             ),
         ),
         'psr/event-dispatcher' => array(
@@ -1382,8 +1382,8 @@
         'psr/log-implementation' => array(
             'dev_requirement' => false,
             'provided' => array(
-                0 => '3.0.0',
-                1 => '1.0|2.0|3.0',
+                0 => '1.0|2.0|3.0',
+                1 => '3.0.0',
             ),
         ),
         'psr/simple-cache' => array(

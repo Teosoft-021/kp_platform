@@ -27,15 +27,15 @@ function emailPrefixMask(?string $value, int $escapedChars = 1): ?string
 	if ($atPos === false) {
 		return $value;
 	}
-	
+
 	$emailUsername = mb_substr($value, 0, $atPos);
 	$emailDomain = mb_substr($value, ($atPos + 1));
-	
+
 	if (!empty($emailUsername) && !empty($emailDomain)) {
 		$emailUsername = str($emailUsername)->mask('x', $escapedChars)->toString();
 		$value = $emailUsername . '@' . $emailDomain;
 	}
-	
+
 	return $value;
 }
 
@@ -53,7 +53,7 @@ function emailPrefixMask(?string $value, int $escapedChars = 1): ?string
 function replaceNewlinesWithSpace(?string $string): string
 {
 	$string = str_replace(PHP_EOL, ' ', strval($string));
-	
+
 	return trim($string);
 }
 
@@ -73,7 +73,7 @@ function replaceNewlinesWithSpace(?string $string): string
 function replaceNonBreakingSpaceWithSpace(?string $string): string
 {
 	$string = preg_replace('~\x{00a0}~u', ' ', $string);
-	
+
 	return trim($string);
 }
 
@@ -87,10 +87,10 @@ function replaceNonBreakingSpaceWithSpace(?string $string): string
 function normalizeSpace(?string $string): string
 {
 	$string = strval($string);
-	
+
 	$string = replaceNonBreakingSpaceWithSpace($string);
 	$string = preg_replace('/ +/', ' ', $string);
-	
+
 	return trim($string);
 }
 
@@ -104,10 +104,10 @@ function normalizeSpace(?string $string): string
 function normalizeWhitespace(?string $string): string
 {
 	$string = strval($string);
-	
+
 	$string = replaceNonBreakingSpaceWithSpace($string);
 	$string = preg_replace('/\s\s+/u', ' ', $string);
-	
+
 	return trim($string);
 }
 
@@ -121,7 +121,7 @@ function removeDiacritics(?string $string): ?string
 {
 	if (is_null($string)) return null;
 	$diacritics = getCachedReferrerList('diacritics');
-	
+
 	return strtr($string, $diacritics);
 }
 
@@ -134,28 +134,28 @@ function removeDiacritics(?string $string): ?string
 function sanitizeInput(?string $input): array|string
 {
 	if (empty($input)) return '';
-	
+
 	// 1. Remove all HTML tags
 	$input = strip_tags($input);
-	
+
 	// 2.a. Convert HTML entities to their corresponding characters
 	$input = html_entity_decode($input, ENT_QUOTES);
-	
+
 	// 2.b. And remove the converted HTML tags
 	$input = strip_tags($input);
-	
+
 	// 3.a. Convert special characters to HTML entities
 	$input = htmlspecialchars($input, ENT_QUOTES);
-	
+
 	// 3.b. Remove the converted HTML tags
 	$input = strip_tags($input);
-	
+
 	// 3.c. Convert special HTML entities back to characters
 	$input = htmlspecialchars_decode($input, ENT_QUOTES);
-	
+
 	// 4. Normalize all simple spaces (except other whitespaces)
 	$input = normalizeSpace($input);
-	
+
 	// Remove any remaining non-printable characters
 	return trim($input);
 }
@@ -169,11 +169,11 @@ function sanitizeInput(?string $input): array|string
 function singleLineStringCleaner(?string $string): string
 {
 	$string = strval($string);
-	
+
 	$string = sanitizeInput($string); // Sanitize input to prevent XSS attacks and remove malicious characters
 	$string = stripUtf8mb4CharsIfNotEnabled($string); // Remove 4(+)-byte characters (If it is not enabled)
 	$string = normalizeWhitespace($string); // Normalize all whitespaces
-	
+
 	return trim($string);
 }
 
@@ -187,7 +187,7 @@ function singleLineStringCleaner(?string $string): string
 function singleLineStringCleanerStrict(?string $string, bool $allowEmojis = true): string
 {
 	$string = strval($string);
-	
+
 	$string = sanitizeInput($string); // Sanitize input to prevent XSS attacks and remove malicious characters
 	$string = stripUtf8mb4CharsIfNotEnabled($string); // Remove 4(+)-byte characters (If it is not enabled)
 	if (!$allowEmojis) {
@@ -196,7 +196,7 @@ function singleLineStringCleanerStrict(?string $string, bool $allowEmojis = true
 	}
 	$string = normalizeWhitespace($string); // Normalize all whitespaces
 	$string = trim($string);
-	
+
 	return htmlspecialchars($string, ENT_QUOTES, 'UTF-8');
 }
 
@@ -209,13 +209,13 @@ function singleLineStringCleanerStrict(?string $string, bool $allowEmojis = true
 function multiLinesStringCleaner(?string $string): string
 {
 	$string = strval($string);
-	
+
 	$string = strip_tags($string, '<br><br/>'); // Remove HTML tags (except <br>)
 	$string = preg_replace('/<br\s*\/?[^>]*>/i', "\n", $string); // Convert <br> tags to \n
 	$string = preg_replace("/[\r\n]+/", "\n", $string);
 	$string = stripUtf8mb4CharsIfNotEnabled($string); // Remove 4(+)-byte characters (If it is not enabled)
 	$string = normalizeSpace($string); // Normalize all simple spaces (except other whitespaces)
-	
+
 	return mb_ucfirst(trim($string));
 }
 
@@ -240,7 +240,7 @@ function taggable(array|string|null $value, int $limit = 15, bool $asArray = fal
 	if (!is_array($value) && !is_string($value)) {
 		return $asArray ? [] : null;
 	}
-	
+
 	$arrayExpected = false;
 	if (is_array($value)) {
 		$arraySrc = $value;
@@ -248,24 +248,24 @@ function taggable(array|string|null $value, int $limit = 15, bool $asArray = fal
 	} else {
 		$arraySrc = preg_split('|[:,;#_\|\n\t]+|ui', $value);
 	}
-	
+
 	$tags = [];
 	$i = 0;
 	foreach ($arraySrc as $tag) {
 		$tag = singleLineStringCleaner($tag);
-		
+
 		// Remove all tags (simultaneously) staring and ending by a number
 		$tag = preg_replace('/\b\d+\b/ui', '', $tag);
-		
+
 		// Remove special characters
 		$tag = str_replace([':', ',', ';', '_', '\\', '/', '|', '+'], '', $tag);
-		
+
 		// Change the tag case (lowercase)
 		$tag = mb_strtolower(trim($tag));
-		
+
 		// Check valid tag (tag must have more one character)
 		$isValid = (!empty($tag) && mb_strlen($tag) > 1);
-		
+
 		// Save the tag in array
 		if ($isValid) {
 			if ($i <= $limit) {
@@ -274,12 +274,12 @@ function taggable(array|string|null $value, int $limit = 15, bool $asArray = fal
 			$i++;
 		}
 	}
-	
+
 	$tags = array_unique($tags);
 	if ($arrayExpected || $asArray) {
 		return $tags;
 	}
-	
+
 	return !empty($tags) ? implode(',', $tags) : null;
 }
 
@@ -351,12 +351,12 @@ function isNumericStrict(?string $string, bool $withRegex = true): bool
 {
 	$string = stripSpecialChars($string);
 	$string = stripWhitespace($string);
-	
+
 	if ($withRegex) {
 		if (preg_match('/^[0-9]+$/u', $string)) {
 			return true;
 		}
-		
+
 		return false;
 	} else {
 		for ($i = 0; $i < mb_strlen($string); $i++) {
@@ -364,7 +364,7 @@ function isNumericStrict(?string $string, bool $withRegex = true): bool
 				return false;
 			}
 		}
-		
+
 		return true;
 	}
 }
@@ -380,7 +380,7 @@ function stripWhitespace(?string $string, string $replacement = ''): string
 {
 	// White-space = [ \t\r\n\f];
 	$string = preg_replace('/\s+/u', $replacement, strval($string));
-	
+
 	return getAsString($string);
 }
 
@@ -409,7 +409,7 @@ function stripSpecialChars(?string $string, string $replacement = ''): string
 	 * Word characters in multibyte are letters (in all languages) and digits
 	 */
 	$string = preg_replace('/[^\p{L}\p{N}\s]/u', $replacement, strval($string));
-	
+
 	return getAsString($string);
 }
 
@@ -424,7 +424,7 @@ function stripSpecialChars(?string $string, string $replacement = ''): string
 function stripEmojis(?string $string): string
 {
 	$string = strval($string);
-	
+
 	$string = preg_replace('/[\x{1F600}-\x{1F64F}]/u', '', $string); // Emoticons
 	$string = preg_replace('/[\x{1F300}-\x{1F5FF}]/u', '', $string); // Misc Symbols and Pictographs
 	$string = preg_replace('/[\x{1F680}-\x{1F6FF}]/u', '', $string); // Transport and Map Symbols
@@ -436,7 +436,7 @@ function stripEmojis(?string $string): string
 	$string = preg_replace('/[\x{1FA70}-\x{1FAFF}]/u', '', $string); // Symbols and Pictographs Extended-A
 	$string = preg_replace('/[\x{2600}-\x{26FF}]/u', '', $string); // Miscellaneous Symbols
 	$string = preg_replace('/[\x{2700}-\x{27BF}]/u', '', $string); // Dingbats
-	
+
 	return getAsString($string);
 }
 
@@ -453,7 +453,7 @@ function stripUtf8mb4Chars(?string $string): string
 	// Matches 4(+)-byte UTF-8 sequences and remove them
 	// $string = preg_replace('/[\xF0-\xF7][\x80-\xBF]{3}/', '', strval($string));
 	$string = preg_replace('/[\x{10000}-\x{10FFFF}]/u', '', strval($string));
-	
+
 	return getAsString($string);
 }
 
@@ -472,7 +472,7 @@ function stripNonAsciiAndExtendedChars(?string $string): string
 	 * [:ascii:] matches a character with ASCII value 0 through 127
 	 */
 	$string = preg_replace('/[^\p{L}\p{N}\p{M}[:ascii:]]+/ui', '', strval($string));
-	
+
 	return getAsString($string);
 }
 
@@ -485,18 +485,18 @@ function stripNonAsciiAndExtendedChars(?string $string): string
 function getUrlHost(?string $url): ?string
 {
 	if (empty($url)) return null;
-	
+
 	// In case scheme relative URI is passed, e.g., //www.google.com/
 	$url = trim($url, '/');
-	
+
 	// If a scheme not included, prepend it
 	if (!preg_match('#^http(s)?://#', $url)) {
 		$url = 'http' . '://' . $url;
 	}
-	
+
 	$parts = parse_url($url);
 	$host = preg_replace('/^www\./', '', $parts['host']); // remove www
-	
+
 	return getAsStringOrNull($host);
 }
 
@@ -507,18 +507,18 @@ function getUrlHost(?string $url): ?string
  * @param string|null $skip
  * @return string
  */
-function noFollowLinks(?string $html, string $skip = null): string
+function noFollowLinks(?string $html, ?string $skip = null): string
 {
 	$callback = function ($mach) use ($skip) {
 		$link = $mach[1] ?? null;
 		$orig = $mach[0] ?? null;
 		$isSkipped = (!empty($skip) && str_contains($link, $skip));
 		$hasNoFollow = str_contains($link, 'rel=');
-		
+
 		return (!$isSkipped && !$hasNoFollow) ? $link . ' rel="nofollow">' : $orig;
 	};
 	$html = preg_replace_callback("#(<a[^>]+?)>#is", $callback, strval($html));
-	
+
 	return getAsString($html);
 }
 
@@ -536,20 +536,20 @@ function urlsToLinks(?string $str, array $attributes = []): string
 	foreach ($attributes as $attribute => $value) {
 		$attrs .= " {$attribute}=\"{$value}\"";
 	}
-	
+
 	$str = ' ' . $str;
-	
+
 	$pattern = '`([^"=\'>])((http|https|ftp)://[^\s<]+[^\s<\.)])`i';
 	$replacement = '$1<a rel="nofollow" href="$2"' . $attrs . ' target="_blank">$2</a>';
 	$str = preg_replace($pattern, $replacement, $str);
-	
+
 	$str = substr($str, 1);
-	
+
 	// Add rel="nofollow" to links
 	$httpHost = request()->server('HTTP_HOST');
 	$parse = parse_url('http' . '://' . $httpHost);
 	$str = noFollowLinks($str, $parse['host']);
-	
+
 	// Find and attach target="_blank" to all href links from text
 	return targetBlankLinks($str);
 }
@@ -564,24 +564,24 @@ function targetBlankLinks(?string $content): string
 {
 	// Find all links
 	preg_match_all('/<a ((?!target)[^>])+?>/ui', strval($content), $matches);
-	
+
 	// Loop only the first array to modify links
 	if (is_array($matches) && isset($matches[0])) {
 		foreach ($matches[0] as $key => $value) {
 			// Take orig link
 			$origLink = $value;
-			
+
 			// Does it have target="_blank"
 			if (!preg_match('/target="_blank"/ui', $origLink)) {
 				// Add target = "_blank"
 				$newLink = preg_replace("/<a(.*?)>/ui", "<a$1 target=\"_blank\">", $origLink);
-				
+
 				// Replace the old link in content with the new link
 				$content = str_replace($origLink, $newLink, $content);
 			}
 		}
 	}
-	
+
 	return getAsString($content);
 }
 
@@ -603,15 +603,15 @@ function hexToRgb(string $hex, ?string $invalidColor = 'white'): array
 	if ($hex === 'transparent') {
 		return ['r' => 0, 'g' => 0, 'b' => 0, 'a' => 0]; // Fully transparent
 	}
-	
+
 	// Remove the '#' if it exists
 	$hex = str_replace('#', '', $hex);
-	
+
 	// Handle shorthand hex (e.g., #03F) by expanding it
 	if (strlen($hex) == 3) {
 		$hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
 	}
-	
+
 	// Check if the hex code is valid
 	if (strlen($hex) != 6 || !ctype_xdigit($hex)) {
 		// Return white or black RGB based on the $invalidColor parameter
@@ -619,12 +619,12 @@ function hexToRgb(string $hex, ?string $invalidColor = 'white'): array
 			? ['r' => 255, 'g' => 255, 'b' => 255]
 			: ['r' => 0, 'g' => 0, 'b' => 0];
 	}
-	
+
 	// Split the hex into red, green, and blue components
 	$r = hexdec(substr($hex, 0, 2));
 	$g = hexdec(substr($hex, 2, 2));
 	$b = hexdec(substr($hex, 4, 2));
-	
+
 	// Return the RGB associative array
 	return ['r' => $r, 'g' => $g, 'b' => $b];
 }
@@ -647,15 +647,15 @@ function hexToRgba(string $hex, float $alpha = 1, ?string $invalidColor = 'white
 	if ($hex === 'transparent') {
 		return ['r' => 0, 'g' => 0, 'b' => 0, 'a' => 0]; // Fully transparent
 	}
-	
+
 	// Remove the '#' if it exists
 	$hex = str_replace('#', '', $hex);
-	
+
 	// Handle shorthand hex (e.g., #03F) by expanding it
 	if (strlen($hex) == 3) {
 		$hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
 	}
-	
+
 	// Check if the hex code is valid
 	if (strlen($hex) != 6 || !ctype_xdigit($hex)) {
 		// Return white or black RGBA based on the $invalidColor parameter
@@ -663,12 +663,12 @@ function hexToRgba(string $hex, float $alpha = 1, ?string $invalidColor = 'white
 			? ['r' => 255, 'g' => 255, 'b' => 255, 'a' => $alpha]
 			: ['r' => 0, 'g' => 0, 'b' => 0, 'a' => $alpha];
 	}
-	
+
 	// Split the hex into red, green, and blue components
 	$r = hexdec(substr($hex, 0, 2));
 	$g = hexdec(substr($hex, 2, 2));
 	$b = hexdec(substr($hex, 4, 2));
-	
+
 	// Return the RGBA associative array
 	return ['r' => $r, 'g' => $g, 'b' => $b, 'a' => $alpha];
 }
@@ -697,7 +697,7 @@ function rgbToCss(array $rgbArray, bool $raw = false): string
 	if (isset($rgbArray['a']) && $rgbArray['a'] == 0) {
 		return $raw ? '0, 0, 0, 0' : 'rgba(0, 0, 0, 0)';
 	}
-	
+
 	// Check if the array has an alpha channel
 	if (isset($rgbArray['a'])) {
 		$css = sprintf(
@@ -715,7 +715,7 @@ function rgbToCss(array $rgbArray, bool $raw = false): string
 			$rgbArray['b']
 		);
 	}
-	
+
 	// Return raw values if $raw is true, otherwise wrap in rgb() or rgba()
 	return $raw ? $css : (isset($rgbArray['a']) ? "rgba($css)" : "rgb($css)");
 }
@@ -734,7 +734,7 @@ if (!function_exists('mb_ucfirst')) {
 		$strLen = mb_strlen($string, $encoding);
 		$firstChar = mb_substr($string, 0, 1, $encoding);
 		$then = mb_substr($string, 1, $strLen - 1, $encoding);
-		
+
 		return mb_strtoupper($firstChar, $encoding) . $then;
 	}
 }
@@ -749,7 +749,7 @@ if (!function_exists('mb_ucfirst')) {
 function mb_ucwords(?string $string, string $encoding = 'utf-8'): string
 {
 	$tab = [];
-	
+
 	// Split the phrase by any number of space characters, which include " ", \r, \t, \n and \f
 	$words = preg_split('/\s+/ui', strval($string));
 	if (!empty($words)) {
@@ -757,7 +757,7 @@ function mb_ucwords(?string $string, string $encoding = 'utf-8'): string
 			$tab[$key] = mb_ucfirst($word, $encoding);
 		}
 	}
-	
+
 	return !empty($tab) ? implode(' ', $tab) : '';
 }
 
@@ -774,10 +774,10 @@ function mb_ucwords(?string $string, string $encoding = 'utf-8'): string
 function mb_parse_url(?string $url, int $component = -1): false|int|array|string|null
 {
 	if (empty($url)) return false;
-	
+
 	// Encode multi-bytes characters safely
 	$encodedUrl = preg_replace_callback('/[^:\/@?&=#]+/u', fn ($matches) => urlencode($matches[0]), $url);
-	
+
 	// If first encoding failed, use native PHP functions to convert the URL to UTF-8 encoding
 	if (empty($encodedUrl)) {
 		$encodedUrl = mb_convert_encoding($url, 'UTF-8', mb_detect_encoding($url));
@@ -785,13 +785,13 @@ function mb_parse_url(?string $url, int $component = -1): false|int|array|string
 			return null;
 		}
 	}
-	
+
 	// Use native parse_url on the encoded URL
 	$parsed = parse_url($encodedUrl, $component);
 	if ($parsed === false) {
 		return false; // Invalid URL
 	}
-	
+
 	// Decode all parts back to their original multi-bytes form
 	if ($component !== -1) {
 		// Handle specific component extraction
@@ -806,7 +806,7 @@ function mb_parse_url(?string $url, int $component = -1): false|int|array|string
 			}
 		}
 	}
-	
+
 	return $parsed;
 }
 
@@ -821,14 +821,14 @@ function slugify(?string $string, string $separator = '-'): ?string
 {
 	// Remove accents using WordPress API method.
 	$string = remove_accents($string);
-	
+
 	// Slug
 	$string = mb_strtolower($string);
 	$string = @trim($string);
 	$replace = "/(\\s|\\" . $separator . ")+/mu";
 	$subst = $separator;
 	$string = preg_replace($replace, $subst, $string);
-	
+
 	// Remove unwanted punctuation, convert some to '-'
 	$puncTable = [
 		// remove
@@ -865,19 +865,19 @@ function slugify(?string $string, string $separator = '-'): ?string
 		'\\' => '-',
 	];
 	$string = str_replace(array_keys($puncTable), array_values($puncTable), $string);
-	
+
 	// Clean up multiple '-' characters
 	$string = preg_replace('/-{2,}/', '-', $string);
-	
+
 	// Remove trailing '-' character if string not just '-'
 	if ($string != '-') {
 		$string = rtrim($string, '-');
 	}
-	
+
 	if ($separator != '-') {
 		$string = str_replace('-', $separator, $string);
 	}
-	
+
 	return getAsStringOrNull($string);
 }
 
@@ -891,7 +891,7 @@ function getPerms(string $path): int
 {
 	$permissions = fileperms($path);
 	$readablePermissions = substr(sprintf('%o', $permissions), -4);
-	
+
 	return intval($readablePermissions);
 }
 
@@ -908,7 +908,7 @@ function numberPlural($number, ?bool $isRussianLangPluralization = false): float
 	if (!is_numeric($number)) {
 		$number = (int)$number;
 	}
-	
+
 	if ($isRussianLangPluralization === true) {
 		// Russian pluralization rules
 		$typeOfPlural = (($number % 10 == 1) && ($number % 100 != 11))
@@ -924,7 +924,7 @@ function numberPlural($number, ?bool $isRussianLangPluralization = false): float
 		// No rule for other languages
 		$typeOfPlural = $number;
 	}
-	
+
 	return $typeOfPlural;
 }
 
@@ -943,7 +943,7 @@ function sanitizeSettingArray($inputArray, bool $recursive = true): ?array
 	if (!is_array($inputArray)) {
 		return null;
 	}
-	
+
 	if (!empty($inputArray)) {
 		$sanitizedArray = [];
 		foreach ($inputArray as $key => $value) {
@@ -958,13 +958,13 @@ function sanitizeSettingArray($inputArray, bool $recursive = true): ?array
 					|| is_null($value)
 					|| is_array($value)
 				);
-				
+
 				$sanitizedArray[$key] = $isAllowedType ? $value : null;
 			}
 		}
 		$inputArray = $sanitizedArray;
 	}
-	
+
 	return $inputArray;
 }
 
@@ -978,7 +978,7 @@ function isExecFunctionEnabled(): bool
 	try {
 		// Make a small test
 		exec('ls');
-		
+
 		return (isFunctionEnabled('exec') && function_exists('exec'));
 	} catch (Throwable $e) {
 		return false;
@@ -995,7 +995,7 @@ function isFunctionEnabled(string $name): bool
 {
 	try {
 		$disabled = array_map('trim', explode(',', ini_get('disable_functions')));
-		
+
 		return !in_array($name, $disabled);
 	} catch (Throwable $e) {
 		return false;
@@ -1013,7 +1013,7 @@ function isExifExtensionEnabled(): bool
 		if (extension_loaded('exif') && function_exists('exif_read_data')) {
 			return true;
 		}
-		
+
 		return false;
 	} catch (Throwable $e) {
 		return false;
@@ -1031,7 +1031,7 @@ function buildAttributes(?array $attributes): string
 	if (empty($attributes)) {
 		return '';
 	}
-	
+
 	$attributePairs = [];
 	foreach ($attributes as $key => $val) {
 		if (is_int($key)) {
@@ -1041,13 +1041,13 @@ function buildAttributes(?array $attributes): string
 			$attributePairs[] = "{$key}=\"{$val}\"";
 		}
 	}
-	
+
 	$out = trim(implode(' ', $attributePairs));
-	
+
 	if (!empty($out)) {
 		$out = ' ' . $out;
 	}
-	
+
 	return $out;
 }
 
@@ -1063,7 +1063,7 @@ function removeUnmatchedPatterns(?string $string): string
 	$string = preg_replace('|\{[^}]+}|ui', '', $string);
 	$string = preg_replace('|,(\s*,)+|ui', ',', $string);
 	$string = preg_replace('|\s\s+|ui', ' ', $string);
-	
+
 	return trim($string, " \n\r\t\v\0,-");
 }
 
@@ -1079,7 +1079,7 @@ function isArrayOfEmptyElements(?array $array): bool
 	if (empty($array)) {
 		return true;
 	}
-	
+
 	// Iterate through each element in the array
 	foreach ($array as $element) {
 		// If the element is an array, recursively check it
@@ -1094,7 +1094,7 @@ function isArrayOfEmptyElements(?array $array): bool
 			}
 		}
 	}
-	
+
 	// If all elements are empty or arrays with only empty elements, return true
 	return true;
 }
@@ -1114,7 +1114,7 @@ function redirectUrl(string $url, int $status = 301, array $headers = [])
 		redirectUrlWithHtml($url);
 		exit();
 	}
-	
+
 	// Apply headers (by adding new header lines)
 	if (is_array($headers) && !empty($headers)) {
 		foreach ($headers as $key => $value) {
@@ -1125,7 +1125,7 @@ function redirectUrl(string $url, int $status = 301, array $headers = [])
 			}
 		}
 	}
-	
+
 	// Redirect
 	header("Location: " . $url, true, $status);
 	exit();
@@ -1156,7 +1156,7 @@ function redirectUrlWithHtml(string $url)
         If you are not redirected automatically, follow this <a href="' . $url . '">link</a>.
     </body>
 </html>';
-	
+
 	echo $out;
 	exit();
 }
@@ -1170,7 +1170,7 @@ function redirectUrlWithHtml(string $url)
 function splitName(?string $input): array
 {
 	$output = [];
-	
+
 	$space = mb_strpos($input, ' ');
 	if ($space !== false) {
 		$output['firstName'] = mb_substr($input, 0, $space);
@@ -1179,7 +1179,7 @@ function splitName(?string $input): array
 		$output['firstName'] = '';
 		$output['lastName'] = $input;
 	}
-	
+
 	return $output;
 }
 
@@ -1190,7 +1190,7 @@ function splitName(?string $input): array
  * @param int|null $default
  * @return string
  */
-function keepOnlyNumericChars(?string $value, int $default = null): string
+function keepOnlyNumericChars(?string $value, ?int $default = null): string
 {
 	// Use regular expression to keep only numeric characters
 	$value = preg_replace('/[^0-9]/', '', strval($value));
@@ -1198,7 +1198,7 @@ function keepOnlyNumericChars(?string $value, int $default = null): string
 	if (empty($value)) {
 		$value = strval($default);
 	}
-	
+
 	return $value;
 }
 
@@ -1234,24 +1234,24 @@ function roundVal($val, int $precision = 0, int $mode = PHP_ROUND_HALF_UP): stri
 function printJs(?string $code): string
 {
 	if (empty($code)) return '';
-	
+
 	// Define patterns for external and inline JS
 	$externalJsPattern = '/<script([a-z0-9\-_ ]+)src=([^>]+)>(.*?)<\/script>/ius';
 	$inlineJsPattern = '/<script([^>]*)>(.*?)<\/script>/ius';
-	
+
 	// Check for external JS and replace with proper tags
 	$code = preg_replace($externalJsPattern, '<script$1src=$2>$3</script>', $code);
-	
+
 	// Check for inline JS, wrap any unwrapped code with <script> tags
 	$code = preg_replace_callback($inlineJsPattern, function ($matches) {
 		return '<script' . $matches[1] . '>' . $matches[2] . '</script>';
 	}, $code);
-	
+
 	// Wrap any remaining unwrapped JS code with <script> tags
 	if (!preg_match($inlineJsPattern, $code)) {
 		$code = '<script type="text/javascript">' . "\n" . $code . "\n" . '</script>';
 	}
-	
+
 	return getAsString($code);
 }
 
@@ -1264,10 +1264,10 @@ function printJs(?string $code): string
 function printCss(?string $code): string
 {
 	if (empty($code)) return '';
-	
+
 	// Remove HTML tags from the input to avoid injection attacks
 	$sanitizedCode = strip_tags($code);
-	
+
 	// Return the CSS wrapped in style tags
 	return '<style>' . "\n" . $sanitizedCode . "\n" . '</style>';
 }
@@ -1283,7 +1283,7 @@ function lineCount(string $path): int
 {
 	$file = new SplFileObject($path, 'r');
 	$file->seek(PHP_INT_MAX);
-	
+
 	return $file->key() + 1;
 }
 
@@ -1300,18 +1300,18 @@ function escapeStringForJs(?string $string, string $charsToEscape = '"', array $
 {
 	// Use addcslashes to escape the specified characters
 	$string = addcslashes(strval($string), $charsToEscape);
-	
+
 	// Replace newline characters with \n
 	// $string = str_replace(["\r\n", "\r", "\n"], '\\n', $string);
 	$string = preg_replace('/\s+/ui', ' ', $string);
-	
+
 	// Escape additional characters
 	if (!empty($additionalEscapes)) {
 		foreach ($additionalEscapes as $char => $escapeWith) {
 			$string = str_replace($char, $escapeWith, $string);
 		}
 	}
-	
+
 	return getAsString($string);
 }
 
@@ -1329,7 +1329,7 @@ function addHttp(?string $url): ?string
 			$url = 'http' . '://' . $url;
 		}
 	}
-	
+
 	return $url;
 }
 
@@ -1343,23 +1343,23 @@ function isCli(): bool
 	if (defined('STDIN')) {
 		return true;
 	}
-	
+
 	if (php_sapi_name() === 'cli') {
 		return true;
 	}
-	
+
 	if (array_key_exists('SHELL', $_ENV)) {
 		return true;
 	}
-	
+
 	if (empty($_SERVER['REMOTE_ADDR']) && !isset($_SERVER['HTTP_USER_AGENT']) && !empty($_SERVER['argv'])) {
 		return true;
 	}
-	
+
 	if (!array_key_exists('REQUEST_METHOD', $_SERVER)) {
 		return true;
 	}
-	
+
 	return false;
 }
 
@@ -1380,7 +1380,7 @@ function convertUTF8HtmlToAnsi(?string $string): ?string
 	 * 2. Convert HTML entities to their corresponding characters. E.g. &#x00e9; => é
 	 */
 	$string = preg_replace('/\\\\u([a-fA-F0-9]{4})/ui', '&#x\\1;', strval($string));
-	
+
 	return html_entity_decode($string, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401, 'UTF-8');
 }
 
@@ -1392,7 +1392,7 @@ function nlToBr(?string $string): ?string
 {
 	// Replace multiple (one or more) line breaks with a single one.
 	$string = preg_replace("/[\r\n]+/", "\n", strval($string));
-	
+
 	return nl2br(getAsString($string));
 }
 
@@ -1408,10 +1408,10 @@ function prepareArraysForDatabase(?array $entry, bool $unescapedUnicode = true):
 	if (empty($entry)) {
 		return $entry;
 	}
-	
+
 	$preparedEntry = [];
 	$jsonFlags = $unescapedUnicode ? JSON_UNESCAPED_UNICODE : 0;
-	
+
 	foreach ($entry as $key => $value) {
 		if (is_array($value)) {
 			$preparedEntry[$key] = json_encode($value, $jsonFlags);
@@ -1419,7 +1419,7 @@ function prepareArraysForDatabase(?array $entry, bool $unescapedUnicode = true):
 			$preparedEntry[$key] = $value;
 		}
 	}
-	
+
 	return $preparedEntry;
 }
 
@@ -1427,12 +1427,12 @@ function prepareArraysForDatabase(?array $entry, bool $unescapedUnicode = true):
  * @param int|null $decimalPlaces
  * @return string
  */
-function getInputNumberStep(int $decimalPlaces = null): string
+function getInputNumberStep(?int $decimalPlaces = null): string
 {
 	if (empty($decimalPlaces) || $decimalPlaces <= 0) {
 		$decimalPlaces = 2;
 	}
-	
+
 	return '0.' . (str_pad('1', $decimalPlaces, '0', STR_PAD_LEFT));
 }
 
@@ -1451,7 +1451,7 @@ function createRandomString(int $length = 6): string
 		$rand = mt_rand(0, $max);
 		$str .= $chars[$rand];
 	}
-	
+
 	return $str;
 }
 
@@ -1468,20 +1468,20 @@ function createRandomString(int $length = 6): string
 function colourBrightness(?string $hexCode, float $percent): string
 {
 	$hexCode = ltrim($hexCode, '#');
-	
+
 	if (strlen($hexCode) == 3) {
 		$hexCode = $hexCode[0] . $hexCode[0] . $hexCode[1] . $hexCode[1] . $hexCode[2] . $hexCode[2];
 	}
-	
+
 	$hexCode = array_map('hexdec', str_split($hexCode, 2));
-	
+
 	foreach ($hexCode as & $color) {
 		$adjustableLimit = $percent < 0 ? $color : 255 - $color;
 		$adjustAmount = ceil($adjustableLimit * $percent);
-		
+
 		$color = str_pad(dechex($color + $adjustAmount), 2, '0', STR_PAD_LEFT);
 	}
-	
+
 	return '#' . implode($hexCode);
 }
 
@@ -1501,29 +1501,29 @@ function getContrastColor(?string $hexColor): string
 	$r1 = hexdec(substr($hexColor, 1, 2));
 	$g1 = hexdec(substr($hexColor, 3, 2));
 	$b1 = hexdec(substr($hexColor, 5, 2));
-	
+
 	// Black RGB
 	$blackColor = '#000000';
 	$rToBlackColor = hexdec(substr($blackColor, 1, 2));
 	$gToBlackColor = hexdec(substr($blackColor, 3, 2));
 	$bToBlackColor = hexdec(substr($blackColor, 5, 2));
-	
+
 	// Calc contrast ratio
 	$l1 = 0.2126 * pow($r1 / 255, 2.2)
 		+ 0.7152 * pow($g1 / 255, 2.2)
 		+ 0.0722 * pow($b1 / 255, 2.2);
-	
+
 	$l2 = 0.2126 * pow($rToBlackColor / 255, 2.2)
 		+ 0.7152 * pow($gToBlackColor / 255, 2.2)
 		+ 0.0722 * pow($bToBlackColor / 255, 2.2);
-	
+
 	$contrastRatio = 0;
 	if ($l1 > $l2) {
 		$contrastRatio = (int)(($l1 + 0.05) / ($l2 + 0.05));
 	} else {
 		$contrastRatio = (int)(($l2 + 0.05) / ($l1 + 0.05));
 	}
-	
+
 	// If contrast is more than 5, return black color
 	if ($contrastRatio > 5) {
 		return '#000000';
@@ -1544,18 +1544,18 @@ function cssMinify(?string $code): string
 {
 	// Make it into one long line
 	$code = str_replace(["\n", "\r"], '', $code);
-	
+
 	// Replace all multiple spaces by one space
 	$code = preg_replace('!\s+!', ' ', $code);
-	
+
 	// Replace some unneeded spaces, modify as needed
 	$code = str_replace([' {', ' }', '{ ', '; '], ['{', '}', '{', ';'], $code);
-	
+
 	// Remove comments
 	$code = str_replace('/*', '_COMMENT_START', $code);
 	$code = str_replace('*/', 'COMMENT_END_', $code);
 	$code = preg_replace('/_COMMENT_START.*?COMMENT_END_/s', '', $code);
-	
+
 	return trim($code);
 }
 
@@ -1573,7 +1573,7 @@ function recursiveGlob(string $pattern, int $flags = 0): bool|array
 	foreach (glob(dirname($pattern) . '/*', GLOB_ONLYDIR | GLOB_NOSORT) as $dir) {
 		$files = array_merge($files, recursiveGlob($dir . '/' . basename($pattern), $flags));
 	}
-	
+
 	return $files;
 }
 
@@ -1590,7 +1590,7 @@ function removeDirectory(string $dir, bool $preserve = false): bool
 	if (!is_dir($dir)) {
 		return false;
 	}
-	
+
 	$objects = scandir($dir);
 	foreach ($objects as $object) {
 		if ($object != '.' && $object != '..') {
@@ -1601,11 +1601,11 @@ function removeDirectory(string $dir, bool $preserve = false): bool
 			}
 		}
 	}
-	
+
 	if (!$preserve) {
 		rmdir($dir);
 	}
-	
+
 	return true;
 }
 
@@ -1633,11 +1633,11 @@ function zipDirectory($sourceDir, $zipFile): bool
 	if (!(extension_loaded('zip') && class_exists('\ZipArchive'))) {
 		return false;
 	}
-	
+
 	if (!file_exists($sourceDir)) {
 		return false;
 	}
-	
+
 	try {
 		// Check if the destination directory exists, if not, create it
 		// Get the zip file directory
@@ -1645,37 +1645,37 @@ function zipDirectory($sourceDir, $zipFile): bool
 		if (!is_dir($destinationDir)) {
 			mkdir($destinationDir, 0777, true);
 		}
-		
+
 		// Zip the file
 		$zip = new ZipArchive();
-		
+
 		if ($zip->open($zipFile, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
 			return false;
 		}
-		
+
 		$sourceDir = realpath($sourceDir);
-		
+
 		$files = new RecursiveIteratorIterator(
 			new RecursiveDirectoryIterator($sourceDir),
 			RecursiveIteratorIterator::SELF_FIRST
 		);
-		
+
 		foreach ($files as $file) {
 			$file = realpath($file);
-			
+
 			if (is_dir($file)) {
 				$zip->addEmptyDir(str_replace($sourceDir . '/', '', $file . '/'));
 			} else if (is_file($file)) {
 				$zip->addFile($file, str_replace($sourceDir . '/', '', $file));
 			}
 		}
-		
+
 		$zip->close();
-		
+
 		return file_exists($zipFile);
 	} catch (Throwable $e) {
 	}
-	
+
 	return false;
 }
 
@@ -1691,21 +1691,21 @@ function extractZip($zipFile, $extractTo): bool
 	if (!(extension_loaded('zip') && class_exists('\ZipArchive'))) {
 		return false;
 	}
-	
+
 	if (!file_exists($zipFile)) {
 		return false;
 	}
-	
+
 	try {
 		$zip = new ZipArchive();
 		$zip->open($zipFile);
 		$zip->extractTo($extractTo);
 		$zip->close();
-		
+
 		return true;
 	} catch (Throwable $e) {
 	}
-	
+
 	return false;
 }
 
@@ -1718,22 +1718,22 @@ function extractZip($zipFile, $extractTo): bool
 function escapeCodeTagContent($html): ?string
 {
 	if (!is_string($html)) return null;
-	
+
 	preg_match_all('/<code>(.+?)<\/code>/u', $html, $matches);
 	$array = $matches[1] ?? [];
 	if (!empty($array)) {
 		foreach ($array as $codeStr) {
 			$codeStrEnc = $codeStr;
-			
+
 			$codeStrEnc = preg_replace('/<([^>]*)>/u', '&lt;$1&gt;', $codeStrEnc);
 			$codeStrEnc = str_replace('&amp;', '&', $codeStrEnc);
-			
+
 			$search = '<code>' . $codeStr . '</code>';
 			$replace = '<code>' . $codeStrEnc . '</code>';
 			$html = str_replace($search, $replace, $html);
 		}
 	}
-	
+
 	return is_string($html) ? $html : null;
 }
 
@@ -1754,7 +1754,7 @@ function generateNumberRange(int $min, int $max, int $interval, bool $includeBou
 	if ($interval <= 0) {
 		throw new InvalidArgumentException("Interval must be a positive number");
 	}
-	
+
 	$range = [];
 	for ($i = $min; $i <= $max; $i += $interval) {
 		$range[] = $i;
@@ -1768,10 +1768,10 @@ function generateNumberRange(int $min, int $max, int $interval, bool $includeBou
 	if (!is_null($requiredValue) && !in_array($requiredValue, $range)) {
 		$range[] = $requiredValue;
 	}
-	
+
 	$range = array_unique($range);
 	sort($range);
-	
+
 	return $range;
 }
 
@@ -1798,7 +1798,7 @@ function getAsStringOrNull($value): ?string
 	if (is_numeric($value)) {
 		$value = strval($value);
 	}
-	
+
 	return isStringable($value) ? (string)$value : null;
 }
 
@@ -1820,11 +1820,11 @@ function getAsString($value, ?string $default = ''): string
 function getAsInt($value, int $default = 0): int
 {
 	if (is_int($value)) return $value;
-	
+
 	if (is_string($value)) {
 		$value = ctype_digit($value) ? (int)$value : $value;
 	}
-	
+
 	return is_int($value) ? $value : $default;
 }
 
@@ -1836,9 +1836,9 @@ function getAsInt($value, int $default = 0): int
 function getCommaSeparatedStrAsArray($value, array $default = []): array
 {
 	if (is_array($value)) return $value;
-	
+
 	$array = is_string($value) ? explode(',', $value) : $value;
-	
+
 	return is_array($array) ? $array : $default;
 }
 
@@ -1849,7 +1849,7 @@ function getCommaSeparatedStrAsArray($value, array $default = []): array
 function getIntAsBoolean($value): bool
 {
 	if (is_bool($value)) return $value;
-	
+
 	return ($value === 1 || $value === '1');
 }
 
@@ -1871,7 +1871,7 @@ function reduceConsecutiveChar(string $input, string $char, int $numToKeep, ?str
 	if (empty($input) || empty($char)) {
 		return $input;
 	}
-	
+
 	$exceeding = $numToKeep + 1;
 	if ($numToKeep > 0) {
 		$replacement = !empty($replacement) ? $replacement : $char;
@@ -1879,12 +1879,12 @@ function reduceConsecutiveChar(string $input, string $char, int $numToKeep, ?str
 	} else {
 		$replacement = '';
 	}
-	
+
 	// Replace '$exceeding' or more '$char' with '$numToKeep' '$char'
 	$escapedChar = preg_quote($char, '/');
 	$pattern = '/' . $escapedChar . '{' . $exceeding . ',}/u';
 	$output = preg_replace($pattern, $replacement, $input);
-	
+
 	return getAsString($output);
 }
 
@@ -1906,7 +1906,7 @@ function generateStringAcronym(string $string, string $delimiter = ''): string
 	if (empty($string)) {
 		return '';
 	}
-	
+
 	$acronym = '';
 	foreach (preg_split('/[^\p{L}]+/u', $string) as $word) {
 		if (!empty($word)) {
@@ -1914,7 +1914,7 @@ function generateStringAcronym(string $string, string $delimiter = ''): string
 			$acronym .= $firstLetter . $delimiter;
 		}
 	}
-	
+
 	return $acronym;
 }
 
@@ -1940,7 +1940,7 @@ function findEmailAddresses($string): array
 {
 	$pattern = '/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/';
 	preg_match_all($pattern, $string, $matches);
-	
+
 	return $matches[0] ?? [];
 }
 
@@ -1951,13 +1951,13 @@ function findEmailAddresses($string): array
 function getExceptionMessage(Throwable $e): string
 {
 	$message = $e->getMessage();
-	
+
 	if (config('app.debug')) {
 		if (!empty($message)) {
 			$message = 'Error: ' . $message . ' in "' . $e->getFile() . '" on line ' . $e->getLine();
 		}
 	}
-	
+
 	return $message;
 }
 
@@ -1971,7 +1971,7 @@ function getExceptionMessage(Throwable $e): string
 function isHexColor(?string $color): bool
 {
 	if (empty($color)) return false;
-	
+
 	return (bool)preg_match('/^#?([a-fA-F0-9]{3}|[a-fA-F0-9]{6})$/', $color);
 }
 
@@ -2001,15 +2001,15 @@ function getClassNamespaceName($class, int $depth = 0, string $direction = 'righ
 	if (is_object($class)) {
 		$class = get_class($class);
 	}
-	
+
 	// Validate class existence and string type
 	if (!is_string($class) || !class_exists($class)) {
 		return '';
 	}
-	
+
 	// Get the namespace using ReflectionClass
 	$namespace = (new \ReflectionClass($class))->getNamespaceName();
-	
+
 	// If depth is 0 or namespace is empty, return full namespace (unless removing)
 	if (empty($namespace)) {
 		return '';
@@ -2017,38 +2017,38 @@ function getClassNamespaceName($class, int $depth = 0, string $direction = 'righ
 	if ($depth === 0 && !$remove) {
 		return $namespace;
 	}
-	
+
 	// Split namespace into parts
 	$parts = explode('\\', trim($namespace, '\\'));
 	$totalParts = count($parts);
-	
+
 	// Handle negative or excessive depth
 	if ($depth < 0 || ($depth > $totalParts && !$remove)) {
 		return '';
 	}
-	
+
 	// Adjust depth for removal if it exceeds total parts
 	if ($remove && $depth > $totalParts) {
 		$depth = $totalParts;
 	}
-	
+
 	// Process based on direction and remove flag
 	if ($direction === 'right') {
 		if ($remove) {
 			// Remove $depth parts from the right
 			return implode('\\', array_slice($parts, 0, $totalParts - $depth));
 		}
-		
+
 		// Keep $depth parts from the right
 		return implode('\\', array_slice($parts, -$depth));
 	}
-	
+
 	// Default: left direction
 	if ($remove) {
 		// Remove $depth parts from the left
 		return implode('\\', array_slice($parts, $depth));
 	}
-	
+
 	// Keep $depth parts from the left
 	return implode('\\', array_slice($parts, 0, $depth));
 }

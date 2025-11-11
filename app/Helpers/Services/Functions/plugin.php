@@ -27,29 +27,29 @@ use Illuminate\Support\Facades\File;
  * @param bool $checkInstalled
  * @return array
  */
-function plugin_list(string $category = null, bool $checkInstalled = false): array
+function plugin_list(?string $category = null, bool $checkInstalled = false): array
 {
 	$plugins = [];
-	
+
 	// Load all plugins services providers
 	$list = File::glob(config('larapen.core.plugin.path') . '*', GLOB_ONLYDIR);
-	
+
 	if (count($list) > 0) {
 		foreach ($list as $pluginPath) {
 			// Get plugin folder name
 			$pluginFolderName = strtolower(last(explode(DIRECTORY_SEPARATOR, $pluginPath)));
-			
+
 			// Get plugin details
 			$plugin = load_plugin($pluginFolderName);
 			if (empty($plugin)) {
 				continue;
 			}
-			
+
 			// Filter for category
 			if (!is_null($category) && $plugin->category != $category) {
 				continue;
 			}
-			
+
 			// Check installed plugins
 			try {
 				$plugin->installed = ($plugin->is_compatible)
@@ -58,16 +58,16 @@ function plugin_list(string $category = null, bool $checkInstalled = false): arr
 			} catch (Throwable $e) {
 				continue;
 			}
-			
+
 			// Filter for installed plugins
 			if ($checkInstalled && $plugin->installed != true) {
 				continue;
 			}
-			
+
 			$plugins[$plugin->name] = $plugin;
 		}
 	}
-	
+
 	return $plugins;
 }
 
@@ -75,7 +75,7 @@ function plugin_list(string $category = null, bool $checkInstalled = false): arr
  * @param string|null $category
  * @return array
  */
-function plugin_installed_list(string $category = null): array
+function plugin_installed_list(?string $category = null): array
 {
 	return plugin_list($category, true);
 }
@@ -89,13 +89,13 @@ function plugin_installed_list(string $category = null): array
 function load_plugin(?string $name)
 {
 	if (empty($name)) return null;
-	
+
 	try {
 		// Get the plugin init data
 		$pluginFolderPath = plugin_path($name);
 		$pluginData = file_get_contents($pluginFolderPath . '/init.json');
 		$pluginData = json_decode($pluginData);
-		
+
 		$isCompatible = plugin_check_compatibility($name);
 		$compatibility = null;
 		$compatibilityHint = null;
@@ -103,7 +103,7 @@ function load_plugin(?string $name)
 			$compatibility = 'Not compatible';
 			$compatibilityHint = plugin_compatibility_hint($name);
 		}
-		
+
 		// Plugin details
 		$plugin = [
 			'name'               => $pluginData->name,
@@ -124,11 +124,11 @@ function load_plugin(?string $name)
 			'class'              => plugin_namespace($pluginData->name, ucfirst($pluginData->name)),
 		];
 		$plugin = Arr::toObject($plugin);
-		
+
 	} catch (Throwable $e) {
 		$plugin = null;
 	}
-	
+
 	return $plugin;
 }
 
@@ -144,15 +144,15 @@ function load_installed_plugin(string $name)
 	if (empty($plugin)) {
 		return null;
 	}
-	
+
 	if (!$plugin->is_compatible) {
 		return null;
 	}
-	
+
 	if (isset($plugin->has_installer) && $plugin->has_installer) {
 		try {
 			$installed = call_user_func($plugin->class . '::installed');
-			
+
 			return ($installed) ? $plugin : null;
 		} catch (Throwable $e) {
 			return null;
@@ -167,7 +167,7 @@ function load_installed_plugin(string $name)
  * @param string|null $localNamespace
  * @return string
  */
-function plugin_namespace(string $pluginFolderName, string $localNamespace = null): string
+function plugin_namespace(string $pluginFolderName, ?string $localNamespace = null): string
 {
 	if (!is_null($localNamespace)) {
 		return config('larapen.core.plugin.namespace') . $pluginFolderName . '\\' . $localNamespace;
@@ -183,7 +183,7 @@ function plugin_namespace(string $pluginFolderName, string $localNamespace = nul
  * @param string|null $localPath
  * @return string
  */
-function plugin_path(string $pluginFolderName, string $localPath = null): string
+function plugin_path(string $pluginFolderName, ?string $localPath = null): string
 {
 	return config('larapen.core.plugin.path') . $pluginFolderName . '/' . $localPath;
 }
@@ -195,10 +195,10 @@ function plugin_path(string $pluginFolderName, string $localPath = null): string
  * @param string|null $path
  * @return bool
  */
-function plugin_exists(string $pluginFolderName, string $path = null): bool
+function plugin_exists(string $pluginFolderName, ?string $path = null): bool
 {
 	$fullPath = config('larapen.core.plugin.path') . $pluginFolderName . '/';
-	
+
 	if (empty($path)) {
 		// If the second argument is not set or is empty,
 		// then, check if the plugin's service provider exists instead.
@@ -207,7 +207,7 @@ function plugin_exists(string $pluginFolderName, string $path = null): bool
 	} else {
 		$fullPath = $fullPath . $path;
 	}
-	
+
 	return File::exists($fullPath);
 }
 
@@ -218,7 +218,7 @@ function plugin_exists(string $pluginFolderName, string $path = null): bool
 function plugin_installed_file_exists(string $pluginFolderName): bool
 {
 	$pluginFile = storage_path('framework/plugins/' . $pluginFolderName);
-	
+
 	return File::exists($pluginFile);
 }
 
@@ -233,12 +233,12 @@ function plugin_check_purchase_code($plugin): bool
 	if (is_array($plugin)) {
 		$plugin = Arr::toObject($plugin);
 	}
-	
+
 	$pluginFile = storage_path('framework/plugins/' . $plugin->name);
 	if (File::exists($pluginFile)) {
 		return true;
 	}
-	
+
 	return false;
 }
 
@@ -255,7 +255,7 @@ function plugin_setting_value_html($setting, ?string $out)
 	if (!empty($plugins)) {
 		foreach ($plugins as $plugin) {
 			$pluginMethodNames = preg_grep('#^get(.+)ValueHtml$#', get_class_methods($plugin->class));
-			
+
 			if (!empty($pluginMethodNames)) {
 				foreach ($pluginMethodNames as $method) {
 					try {
@@ -267,7 +267,7 @@ function plugin_setting_value_html($setting, ?string $out)
 			}
 		}
 	}
-	
+
 	return $out;
 }
 
@@ -283,9 +283,9 @@ function plugin_set_setting_value($value, $setting)
 	$plugins = plugin_installed_list();
 	if (!empty($plugins)) {
 		foreach ($plugins as $plugin) {
-			
+
 			$pluginMethodNames = preg_grep('#^set(.+)Value$#', get_class_methods($plugin->class));
-			
+
 			if (!empty($pluginMethodNames)) {
 				foreach ($pluginMethodNames as $method) {
 					try {
@@ -297,7 +297,7 @@ function plugin_set_setting_value($value, $setting)
 			}
 		}
 	}
-	
+
 	return $value;
 }
 
@@ -311,7 +311,7 @@ function plugin_set_setting_value($value, $setting)
 function plugin_setting_field_exists($attributes, $pluginAttrName): bool
 {
 	$attributes = JsonUtils::jsonToArray($attributes);
-	
+
 	if (count($attributes) > 0) {
 		foreach ($attributes as $field) {
 			if (isset($field['name']) && $field['name'] == $pluginAttrName) {
@@ -319,7 +319,7 @@ function plugin_setting_field_exists($attributes, $pluginAttrName): bool
 			}
 		}
 	}
-	
+
 	return false;
 }
 
@@ -333,9 +333,9 @@ function plugin_setting_field_exists($attributes, $pluginAttrName): bool
 function plugin_setting_field_create($attributes, $pluginAttrArray): string
 {
 	$attributes = JsonUtils::jsonToArray($attributes);
-	
+
 	$attributes[] = $pluginAttrArray;
-	
+
 	return JsonUtils::arrayToJson($attributes);
 }
 
@@ -349,15 +349,15 @@ function plugin_setting_field_create($attributes, $pluginAttrArray): string
 function plugin_setting_field_delete($attributes, $pluginAttrName): string
 {
 	$attributes = JsonUtils::jsonToArray($attributes);
-	
+
 	// Get plugin's Setting field array
 	$pluginAttrArray = Arr::where($attributes, function ($item) use ($pluginAttrName) {
 		return isset($item['name']) && $item['name'] == $pluginAttrName;
 	});
-	
+
 	// Remove the plugin Setting field array
 	Arr::forget($attributes, array_keys($pluginAttrArray));
-	
+
 	return JsonUtils::arrayToJson($attributes);
 }
 
@@ -371,12 +371,12 @@ function plugin_setting_field_delete($attributes, $pluginAttrName): string
 function plugin_setting_value_delete($values, $pluginAttrName): array
 {
 	$values = JsonUtils::jsonToArray($values);
-	
+
 	// Remove the plugin Setting field array
 	if (isset($values[$pluginAttrName])) {
 		unset($values[$pluginAttrName]);
 	}
-	
+
 	return $values;
 }
 
@@ -390,12 +390,12 @@ function plugin_check_compatibility(?string $name): bool
 {
 	$currentVersion = plugin_version($name);
 	$minVersion = plugin_minimum_version($name);
-	
+
 	$isCompatible = true;
 	if (!empty($minVersion)) {
 		$isCompatible = version_compare($currentVersion, $minVersion, '>=');
 	}
-	
+
 	return $isCompatible;
 }
 
@@ -408,17 +408,17 @@ function plugin_check_compatibility(?string $name): bool
 function plugin_compatibility_hint(?string $name): ?string
 {
 	$minVersion = plugin_minimum_version($name);
-	
+
 	$message = 'Compatible';
 	if (!empty($minVersion)) {
 		// $notCompatibleMessage = 'Not compatible with the app\'s current version.';
 		$notCompatibleMessage = 'The app requires the plugin\'s version %s or higher.';
 		$notCompatibleMessage = sprintf($notCompatibleMessage, $minVersion);
-		
+
 		$isCompatible = plugin_check_compatibility($name);
 		$message = ($isCompatible) ? $message : $notCompatibleMessage;
 	}
-	
+
 	return $message;
 }
 
@@ -431,14 +431,14 @@ function plugin_compatibility_hint(?string $name): ?string
 function plugin_version(?string $name): string
 {
 	$value = null;
-	
+
 	$initFilePath = config('larapen.core.plugin.path') . $name . DIRECTORY_SEPARATOR . 'init.json';
 	if (file_exists($initFilePath)) {
 		$buffer = file_get_contents($initFilePath);
 		$array = json_decode($buffer, true);
 		$value = $array['version'] ?? null;
 	}
-	
+
 	return checkAndUseSemVer($value);
 }
 
@@ -451,12 +451,12 @@ function plugin_version(?string $name): string
 function plugin_minimum_version(?string $name): ?string
 {
 	$value = null;
-	
+
 	if (!empty($name)) {
 		$value = config('version.compatibility.' . $name);
 		$value = is_string($value) ? $value : null;
 	}
-	
+
 	return !empty($value) ? checkAndUseSemVer($value) : null;
 }
 
@@ -482,7 +482,7 @@ function plugin_envato_link(?string $name): bool|string|null
 	if (empty($name)) {
 		return null;
 	}
-	
+
 	$plugins = [
 		'adyen'            => 'https://codecanyon.net/item/adyen-payment-gateway-plugin/35221465',
 		'cashfree'         => 'https://codecanyon.net/item/cashfree-payment-gateway-plugin/35221544',
@@ -501,7 +501,7 @@ function plugin_envato_link(?string $name): bool|string|null
 		'twocheckout'      => 'https://codecanyon.net/item/2checkout-payment-gateway-plugin-for-laraclassified-and-jobclass/19700698',
 		'watermark'        => 'https://codecanyon.net/item/watermark-plugin-for-laraclassified/19700729',
 	];
-	
+
 	return $plugins[$name] ?? null;
 }
 
@@ -514,13 +514,13 @@ function plugin_demo_info(?string $name): ?string
 	if (!isDemoEnv() && !isDevEnv()) {
 		return null;
 	}
-	
+
 	if (empty($name)) {
 		return null;
 	}
-	
+
 	$purchaseLink = plugin_envato_link($name);
-	
+
 	$out = ' ';
 	if ($purchaseLink === false) {
 		$info = 'This plugin is free and comes with the app.';
@@ -533,7 +533,7 @@ function plugin_demo_info(?string $name): ?string
 			$link .= '<a href="' . $purchaseLink . '" target="_blank"' . $info . '>';
 			$link .= '<i class="bi bi-box-arrow-up-right"></i>';
 			$link .= '</a>';
-			
+
 			$info = 'This plugin is optional, and is sold separately.';
 			$info = ' data-bs-toggle="tooltip" title="' . $info . '"';
 			$out .= '<span class="badge bg-warning-subtle text-warning-emphasis fw-normal"' . $info . '>Sold as an extra</span>' . $link;
@@ -543,7 +543,7 @@ function plugin_demo_info(?string $name): ?string
 			$out .= '<span class="badge bg-info-subtle text-info-emphasis fw-normal"' . $info . '>Not included</span>';
 		}
 	}
-	
+
 	return $out;
 }
 
@@ -556,7 +556,7 @@ function plugin_demo_info(?string $name): ?string
 function getNextSettingPosition(?string $orderBy = 'id'): int
 {
 	$orderBy = !empty($orderBy) ? $orderBy : 'id';
-	
+
 	$lft = 2;
 	try {
 		$latestSetting = Setting::query()->orderByDesc($orderBy)->first();
@@ -565,7 +565,7 @@ function getNextSettingPosition(?string $orderBy = 'id'): int
 		}
 	} catch (Throwable $e) {
 	}
-	
+
 	return $lft;
 }
 
@@ -582,14 +582,14 @@ function createPluginSetting(array $pluginSetting): bool
 		$message = 'The columns "name" and "label" are required';
 		throw new CustomException($message);
 	}
-	
+
 	// Remove the plugin setting (for security)
 	dropPluginSetting($pluginSetting['name']);
-	
+
 	// Get the setting's position
 	$lft = getNextSettingPosition();
 	$rgt = $lft + 1;
-	
+
 	$pluginSetting['description'] = $pluginSetting['description'] ?? $pluginSetting['label'];
 	$pluginSetting['fields'] = null;
 	$pluginSetting['field_values'] = null;
@@ -598,11 +598,11 @@ function createPluginSetting(array $pluginSetting): bool
 	$pluginSetting['rgt'] = $rgt;
 	$pluginSetting['depth'] = 0;
 	$pluginSetting['active'] = 1;
-	
+
 	// Create plugin setting
 	DB::statement('ALTER TABLE ' . DBUtils::table((new Setting())->getTable()) . ' AUTO_INCREMENT = 1;');
 	$setting = Setting::create($pluginSetting);
-	
+
 	return !empty($setting);
 }
 
