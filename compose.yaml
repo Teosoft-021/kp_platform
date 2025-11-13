@@ -1,3 +1,5 @@
+# OVO BI SE TREBALO SETOVATI
+# * * * * * /usr/local/bin/php /app/artisan schedule:run >> /dev/null 2>&1
 services:
     php:
         build:

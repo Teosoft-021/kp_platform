@@ -1,4 +1,7 @@
 .env
 public/webcron.php
-vendor
 .idea
+storage/installed
+public/robots.txt
+public/storage
+vendor
