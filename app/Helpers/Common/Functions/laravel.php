@@ -43,7 +43,7 @@ use Prologue\Alerts\Facades\Alert;
 function currentRouteAction(): string
 {
 	$value = Route::currentRouteAction();
-	
+
 	return getAsString($value);
 }
 
@@ -59,7 +59,7 @@ function routeActionHas(string|array $string): bool
 	if (is_string($string)) {
 		return str_contains(currentRouteAction(), $string);
 	}
-	
+
 	$found = false;
 	foreach ($string as $item) {
 		$found = str_contains(currentRouteAction(), $item);
@@ -67,7 +67,7 @@ function routeActionHas(string|array $string): bool
 			break;
 		}
 	}
-	
+
 	return $found;
 }
 
@@ -85,12 +85,12 @@ function routeActionHas(string|array $string): bool
 function getUrlSegment(string $requestUri, int $index, ?string $default = null): ?string
 {
 	$requestUri = trim(strtolower($requestUri));
-	
+
 	// Normalize the URL by removing query string if present
 	$requestUri = str_starts_with($requestUri, 'http')
 		? urlQuery($requestUri)->removeAllParameters()->toString()
 		: parse_url($requestUri, PHP_URL_PATH);
-	
+
 	// Find the right $index value
 	if (str_starts_with($requestUri, 'http')) {
 		// When $requestUri starts by the "http(s)://" protocol
@@ -102,11 +102,11 @@ function getUrlSegment(string $requestUri, int $index, ?string $default = null):
 			$index = $index - 1;
 		}
 	}
-	
+
 	// Split into segments
 	$segments = explode('/', $requestUri);
 	$value = $segments[$index] ?? $default;
-	
+
 	return getAsStringOrNull($value);
 }
 
@@ -119,24 +119,24 @@ function getUrlSegment(string $requestUri, int $index, ?string $default = null):
 function isTranslatableModel($model): bool
 {
 	$isTranslatable = false;
-	
+
 	try {
 		if (!($model instanceof Model)) {
 			return false;
 		}
-		
+
 		$isTranslatableModel = (
 			property_exists($model, 'translatable')
 			&& !empty($model->translatable)
 		);
-		
+
 		if ($isTranslatableModel) {
 			$isTranslatable = true;
 		}
 	} catch (Throwable $e) {
 		return false;
 	}
-	
+
 	return $isTranslatable;
 }
 
@@ -150,12 +150,12 @@ function isTranslatableModel($model): bool
 function isTranslatableColumn($model, string|Closure $column): bool
 {
 	if (!is_string($column)) return false;
-	
+
 	/** @var \App\Models\Page $model (for example) */
 	if (isTranslatableModel($model)) {
 		return in_array($column, $model->translatable);
 	}
-	
+
 	return false;
 }
 
@@ -168,12 +168,12 @@ function isTranslatableColumn($model, string|Closure $column): bool
  * @param string|null $locale
  * @return array|\Illuminate\Contracts\Translation\Translator|string|null
  */
-function t(string $key = null, array $replace = [], string $file = 'global', string $locale = null)
+function t(?string $key = null, array $replace = [], string $file = 'global', ?string $locale = null)
 {
 	if (is_null($locale)) {
 		$locale = config('app.locale');
 	}
-	
+
 	return trans($file . '.' . $key, $replace, $locale);
 }
 
@@ -210,7 +210,7 @@ function updateAppKeyWithoutArtisan(bool $clearCookies = false): void
 	if ($clearCookies) {
 		Cookie::forgetAll();
 	}
-	
+
 	$appKey = generateAppKey();
 	DotenvEditor::setKey('APP_KEY', $appKey);
 	DotenvEditor::save();
@@ -224,7 +224,7 @@ function updateAppKeyWithoutArtisan(bool $clearCookies = false): void
 function generateAppKey(): string
 {
 	$base64RandomString = base64_encode(createRandomString(32));
-	
+
 	return 'base64:' . $base64RandomString;
 }
 
@@ -243,18 +243,18 @@ function getIp(?string $defaultIp = ''): string
  * @param string|null $url
  * @return string
  */
-function getHost(string $url = null): string
+function getHost(?string $url = null): string
 {
 	if (!empty($url)) {
 		$host = parse_url($url, PHP_URL_HOST);
 	} else {
 		$host = (trim(request()->server('HTTP_HOST')) != '') ? request()->server('HTTP_HOST') : ($_SERVER['HTTP_HOST'] ?? '');
 	}
-	
+
 	if ($host == '') {
 		$host = parse_url(url()->current(), PHP_URL_HOST);
 	}
-	
+
 	return getAsString($host);
 }
 
@@ -264,14 +264,14 @@ function getHost(string $url = null): string
  * @param string|null $url
  * @return string
  */
-function getDomain(string $url = null): string
+function getDomain(?string $url = null): string
 {
 	if (!empty($url)) {
 		$host = parse_url($url, PHP_URL_HOST);
 	} else {
 		$host = getHost();
 	}
-	
+
 	$tmp = explode('.', $host);
 	if (count($tmp) > 2) {
 		$itemsToKeep = count($tmp) - 2;
@@ -286,7 +286,7 @@ function getDomain(string $url = null): string
 	} else {
 		$domain = @implode('.', $tmp);
 	}
-	
+
 	return $domain;
 }
 
@@ -302,7 +302,7 @@ function getDomain(string $url = null): string
 function getSubDomainName(): string
 {
 	$host = getHost();
-	
+
 	return (substr_count($host, '.') > 1) ? trim(current(explode('.', $host))) : '';
 }
 
@@ -313,7 +313,7 @@ function getCookieDomain(): string
 {
 	$host = getHost();
 	$array = mb_parse_url($host);
-	
+
 	return (is_array($array) && !empty($array['path']))
 		? $array['path']
 		: $host;
@@ -325,12 +325,12 @@ function getCookieDomain(): string
  * @param string|null $url
  * @return bool
  */
-function isLocalEnv(string $url = null): bool
+function isLocalEnv(?string $url = null): bool
 {
 	if (empty($url)) {
 		$url = config('app.url');
 	}
-	
+
 	return (
 		str_contains($url, '127.0.0.1')
 		|| str_contains($url, '::1')
@@ -351,17 +351,17 @@ function checkTld(?string $url): bool
 	if (empty($url)) {
 		return false;
 	}
-	
+
 	$parsedUrl = parse_url($url);
 	if ($parsedUrl === false) {
 		return false;
 	}
-	
+
 	$tldArray = getTopLevelDomainRefList();
 	$patten = implode('|', array_keys($tldArray));
-	
+
 	$matched = preg_match('/\.(' . $patten . ')$/i', $parsedUrl['host']);
-	
+
 	return (bool)$matched;
 }
 
@@ -374,7 +374,7 @@ function vTime(): string
 	if (app()->environment(['staging', 'production'])) {
 		$timeStamp = '';
 	}
-	
+
 	return $timeStamp;
 }
 
@@ -387,16 +387,16 @@ function getRawBaseUrl(): string
 {
 	// Get the Laravel app public path name
 	$publicPathName = basename(rtrim(public_path(), '/'));
-	
+
 	// Get the HTTPS value
 	$https = request()->server('HTTPS');
 	$https = is_string($https) ? strtolower($https) : $https;
 	$protocol = ($https !== 'off') ? 'https' : 'http';
-	
+
 	// Get the HTTP_HOST value
 	$httpHost = trim(request()->server('HTTP_HOST'));
 	$httpHost = rtrim($httpHost, '/');
-	
+
 	// Get the REQUEST_URI value
 	$requestUri = trim(request()->server('REQUEST_URI'));
 	$requestUri = strtok($requestUri, '?');
@@ -404,14 +404,14 @@ function getRawBaseUrl(): string
 	$requestUri = str_starts_with($requestUri, $publicPathName)
 		? '/' . $publicPathName
 		: '';
-	
+
 	// Get the base URL of the current URL
 	$baseUrl = $protocol . '://' . $httpHost . $requestUri;
-	
+
 	// Fixing the base URL from admin or install
 	$baseUrl = head(explode('/' . urlGen()->adminUri(), $baseUrl));
 	$baseUrl = head(explode('/install', $baseUrl));
-	
+
 	return rtrim($baseUrl, '/');
 }
 
@@ -421,19 +421,19 @@ function getRawBaseUrl(): string
  * @param string|null $pattern
  * @return string
  */
-function getRequestPath(string $pattern = null): string
+function getRequestPath(?string $pattern = null): string
 {
 	$currentPath = request()->path();
-	
+
 	if (empty($pattern)) {
 		return $currentPath;
 	}
-	
+
 	$pattern = '#(' . $pattern . ')#ui';
-	
+
 	$matches = [];
 	preg_match($pattern, $currentPath, $matches);
-	
+
 	return !empty($matches[1]) ? $matches[1] : $currentPath;
 }
 
@@ -454,17 +454,17 @@ function generateRandomString(int $length = 6, string $type = 'alphanumeric'): s
 	$numeric = '0123456789';
 	$alpha = 'abcdefghijklmnopqrstuvwxyz';
 	$alphanumeric = $numeric . $alpha;
-	
+
 	// Choose character set based on type
 	$characters = match ($type) {
 		'alpha'        => $alpha,
 		'alphanumeric' => $alphanumeric,
 		default        => $numeric,
 	};
-	
+
 	// Get the selected characters type length
 	$charactersLength = strlen($characters);
-	
+
 	// Generate random string of specified length
 	$out = '';
 	for ($i = 0; $i < $length; $i++) {
@@ -474,7 +474,7 @@ function generateRandomString(int $length = 6, string $type = 'alphanumeric'): s
 			$out .= $characters[rand(0, $charactersLength - 1)];
 		}
 	}
-	
+
 	return $out;
 }
 
@@ -489,11 +489,11 @@ function generateRandomPassword(int $length): string
 	$allowedCharacters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!$%^&#!$%^&#';
 	$random = str_shuffle($allowedCharacters);
 	$password = substr($random, 0, $length);
-	
+
 	if (empty($password)) {
 		$password = Str::random($length);
 	}
-	
+
 	return $password;
 }
 
@@ -506,11 +506,11 @@ function generateRandomPassword(int $length): string
 function generateUniqueCode(int $limit): string
 {
 	$uniqueCode = substr(base_convert(sha1(uniqid(mt_rand())), 16, 36), 0, $limit);
-	
+
 	if (empty($uniqueCode)) {
 		$uniqueCode = Str::random($limit);
 	}
-	
+
 	return $uniqueCode;
 }
 
@@ -527,16 +527,16 @@ function removeLocaleCodeset(?string $locale, bool $nullable = true): string
 	$default = 'en_US';
 	$default = getAsString(config('app.locale'), $default);
 	$default = $nullable ? null : (!str_contains($default, '.') ? $default : 'en_US');
-	
+
 	if (empty($locale)) {
 		return getAsString($default);
 	}
-	
+
 	if (str_contains($locale, '.')) {
 		$tmp = explode('.', $locale);
 		$locale = current($tmp);
 	}
-	
+
 	return getAsString($locale, $default);
 }
 
@@ -551,7 +551,7 @@ function removeLocaleCodeset(?string $locale, bool $nullable = true): string
 function getPrimaryLocaleCode(?string $locale, bool $nullable = true): ?string
 {
 	$default = $nullable ? null : 'en';
-	
+
 	$locale = removeLocaleCodeset($locale, $nullable);
 	if (extension_loaded('intl') && class_exists('\Locale')) {
 		return \Locale::getPrimaryLanguage($locale);
@@ -559,7 +559,7 @@ function getPrimaryLocaleCode(?string $locale, bool $nullable = true): ?string
 	if (isRegionalLocaleCode($locale)) {
 		$locale = str($locale)->substr(0, -3)->toString();
 	}
-	
+
 	return getAsString($locale, $default);
 }
 
@@ -576,17 +576,17 @@ function getPrimaryLocaleCode(?string $locale, bool $nullable = true): ?string
 function getPrimaryLocaleName(?string $code, bool $nullable = true): ?string
 {
 	$default = $nullable ? null : (!empty($code) ? $code : 'English');
-	
+
 	if (empty($code)) {
 		return $default;
 	}
-	
+
 	// Get language list
 	$languages = getLanguageRefList();
-	
+
 	$code = getPrimaryLocaleCode($code, $nullable);
 	$name = $languages[$code] ?? $default;
-	
+
 	return getAsString($name, $default);
 }
 
@@ -601,22 +601,22 @@ function getPrimaryLocaleName(?string $code, bool $nullable = true): ?string
 function getRegionalLocaleCode(?string $locale, bool $nullable = true): ?string
 {
 	$default = $nullable ? null : (!empty($locale) ? $locale : 'en_US');
-	
+
 	if (empty($locale)) {
 		return $default;
 	}
-	
+
 	if (isRegionalLocaleCode($locale)) {
 		return $locale;
 	}
-	
+
 	// Get languages linked to their main country
 	$isoLanguageCountries = getLanguagesLinkedToTheirMainCountry();
-	
+
 	if (!empty($isoLanguageCountries[$locale]['locale'])) {
 		$locale = $isoLanguageCountries[$locale]['locale'];
 	}
-	
+
 	return getAsString($locale, $default);
 }
 
@@ -633,15 +633,15 @@ function getRegionalLocaleName(?string $locale, bool $nullable = true): ?string
 	if (!isRegionalLocaleCode($locale)) {
 		return getPrimaryLocaleName($locale, $nullable);
 	}
-	
+
 	// Get localized locale
 	$locale = getRegionalLocaleCode($locale, $nullable);
-	
+
 	// Get locales with name
 	$localesWithName = getLocalesWithName('merged', false);
-	
+
 	$name = $localesWithName[$locale] ?? $locale;
-	
+
 	return getAsString($name, $locale);
 }
 
@@ -657,14 +657,14 @@ function isRegionalLocaleCode(?string $locale): bool
 	if (empty($locale)) {
 		return false;
 	}
-	
+
 	if (extension_loaded('intl') && class_exists('\Locale')) {
 		return !empty(\Locale::getRegion($locale));
 	}
 	$countryCodeList = array_keys(getCountryRefList());
 	$tmp = explode('_', $locale);
 	$countryCode = end($tmp);
-	
+
 	return in_array($countryCode, $countryCodeList);
 }
 
@@ -685,14 +685,14 @@ if (!function_exists('getLangTag')) {
 		$default = 'en-US';
 		$default = getAsString(config('app.locale'), $default);
 		$default = $nullable ? null : (!str_contains($default, '_') ? $default : 'en');
-		
+
 		if (empty($locale)) {
 			return $default;
 		}
-		
+
 		$locale = str_replace('_', '-', $locale);
 		$locale = getAsString($locale, $default);
-		
+
 		return removeLocaleCodeset($locale, $nullable);
 	}
 }
@@ -709,16 +709,16 @@ function linkStrLimit(string $url, string $string, int $length = 0, string $attr
 	if (!is_string($attributes)) {
 		$attributes = '';
 	}
-	
+
 	if (!empty($attributes)) {
 		$attributes = ' ' . $attributes;
 	}
-	
+
 	$tooltip = '';
 	if (is_numeric($length) && $length > 0 && str($string)->length() > $length) {
 		$tooltip = ' data-bs-toggle="tooltip" title="' . $string . '"';
 	}
-	
+
 	$out = '<a href="' . $url . '"' . $attributes . $tooltip . '>';
 	if ($length > 0) {
 		$out .= str($string)->limit($length);
@@ -726,7 +726,7 @@ function linkStrLimit(string $url, string $string, int $length = 0, string $attr
 		$out .= $string;
 	}
 	$out .= '</a>';
-	
+
 	return $out;
 }
 
@@ -737,12 +737,12 @@ function linkStrLimit(string $url, string $string, int $length = 0, string $attr
  * @param string|null $locale
  * @return string
  */
-function getColumnTranslation($column, string $locale = null): string
+function getColumnTranslation($column, ?string $locale = null): string
 {
 	if (empty($locale)) {
 		$locale = app()->getLocale();
 	}
-	
+
 	if (!is_array($column)) {
 		if (JsonUtils::isJson($column)) {
 			$column = json_decode($column, true);
@@ -750,10 +750,10 @@ function getColumnTranslation($column, string $locale = null): string
 			$column = [$column];
 		}
 	}
-	
+
 	$fallbackLocale = config('app.fallback_locale');
 	$translation = $column[$locale] ?? ($column[$fallbackLocale] ?? head($column));
-	
+
 	return getAsString($translation);
 }
 
@@ -768,10 +768,10 @@ function getRelativePath(?string $path): string
 {
 	$documentRoot = request()->server('DOCUMENT_ROOT');
 	$path = str_replace($documentRoot, '', $path);
-	
+
 	$basePath = base_path();
 	$path = str_replace($basePath, '', $path);
-	
+
 	return (!empty($path) && is_string($path)) ? $path : '/';
 }
 
@@ -782,20 +782,20 @@ function getRelativePath(?string $path): string
  * @param string|null $acceptLanguage
  * @return array
  */
-function parseAcceptLanguageHeader(string $acceptLanguage = null): array
+function parseAcceptLanguageHeader(?string $acceptLanguage = null): array
 {
 	if (empty($acceptLanguage)) {
 		$acceptLanguage = request()->server('HTTP_ACCEPT_LANGUAGE');
 	}
-	
+
 	$acceptLanguageTab = explode(',', $acceptLanguage);
-	
+
 	$array = [];
 	if (!empty($acceptLanguageTab)) {
 		foreach ($acceptLanguageTab as $key => $value) {
 			$tmp = explode(';', $value);
 			if (empty($tmp)) continue;
-			
+
 			if (isset($tmp[0]) && isset($tmp[1])) {
 				$q = str_replace('q=', '', $tmp[1]);
 				$array[$tmp[0]] = (double)$q;
@@ -805,7 +805,7 @@ function parseAcceptLanguageHeader(string $acceptLanguage = null): array
 		}
 	}
 	arsort($array);
-	
+
 	return $array;
 }
 
@@ -832,10 +832,10 @@ function shouldHttpRequestBeRetried(Exception $e, PendingRequest $request, ?stri
 	$isHttpGetRequest = (!empty($method) && strtolower($method) == 'get');
 	$isTimeoutError = (str_contains($msg, 'cURL') && str_contains($msg, 'Connection'));
 	$isTimeoutError = ($isTimeoutError && $isHttpGetRequest);
-	
+
 	// Connection exception encountered
 	$isConnectionException = ($e instanceof ConnectionException);
-	
+
 	return ($isConnectionException || $isTimeoutError);
 }
 
@@ -850,19 +850,19 @@ function parseHttpRequestError($exceptionOrResponse): string
 	if (is_string($exceptionOrResponse)) {
 		return $exceptionOrResponse;
 	}
-	
+
 	$message = null;
-	
+
 	if (
 		$exceptionOrResponse instanceof Throwable
 		&& method_exists($exceptionOrResponse, 'getMessage')
 	) {
 		$message = $exceptionOrResponse->getMessage();
 	}
-	
+
 	if ($exceptionOrResponse instanceof \Illuminate\Http\Client\Response) {
 		$responseErrorMessage = null;
-		
+
 		if (method_exists($exceptionOrResponse, 'reason')) {
 			try {
 				$responseErrorMessage = $exceptionOrResponse->reason();
@@ -889,7 +889,7 @@ function parseHttpRequestError($exceptionOrResponse): string
 			$message = $responseErrorMessage;
 		}
 	}
-	
+
 	if (is_array($message)) {
 		$message = json_encode($message);
 	}
@@ -899,7 +899,7 @@ function parseHttpRequestError($exceptionOrResponse): string
 	if (empty($message) || !is_string($message)) {
 		$message = 'Failed to get the request\'s data.';
 	}
-	
+
 	return $message;
 }
 
@@ -910,7 +910,7 @@ function getHttpStatusCodes(): array
 {
 	$statusTexts = Response::$statusTexts;
 	$statusTexts[419] = getHttp419ExceptionMessage();
-	
+
 	return $statusTexts;
 }
 
@@ -921,16 +921,16 @@ function getHttpStatusCodes(): array
 function isValidHttpStatus(&$status): bool
 {
 	$requestedStatus = $status;
-	
+
 	if (empty($requestedStatus)) return false;
-	
+
 	$requestedStatus = getAsInt($requestedStatus);
 	$isValid = array_key_exists($requestedStatus, getHttpStatusCodes());
-	
+
 	if ($isValid) {
 		$status = $requestedStatus;
 	}
-	
+
 	return $isValid;
 }
 
@@ -941,13 +941,13 @@ function isValidHttpStatus(&$status): bool
 function getHttpStatusMessage($status): string
 {
 	$default = 'Unknown status text';
-	
+
 	if (!isValidHttpStatus($status)) {
 		return $default;
 	}
-	
+
 	$message = getHttpStatusCodes()[$status];
-	
+
 	return getAsString($message, $default);
 }
 
@@ -960,11 +960,11 @@ function getHttp419ExceptionMessage(?Request $request = null): string
 	if (is_null($request)) {
 		$request = request();
 	}
-	
+
 	$message = (isFromApi($request) || isFromAjax($request))
 		? t('page_expired_reload_needed')
 		: t('page_expired');
-	
+
 	return getAsString($message);
 }
 
@@ -979,7 +979,7 @@ function isFromAjax(?Request $request = null): bool
 	if (!$request instanceof Request) {
 		$request = request();
 	}
-	
+
 	return ($request->ajax() || $request->wantsJson());
 }
 
@@ -992,10 +992,10 @@ function isCharsetConflictFound(?string $charset = null): bool
 	if (empty($charset)) {
 		$charset = config('larapen.core.charset', 'utf-8');
 	}
-	
+
 	$systemCharset = @ini_get('default_charset');
 	$systemCharset = is_string($systemCharset) ? $systemCharset : '';
-	
+
 	return (strtolower($charset) != strtolower($systemCharset));
 }
 
@@ -1009,10 +1009,10 @@ function isCharsetConflictFound(?string $charset = null): bool
 function addContentTypeHeader(string $type, ?array $headers = []): array
 {
 	$headers = is_array($headers) ? $headers : [];
-	
+
 	$charset = config('larapen.core.charset', 'utf-8');
 	$defaultHeaders = ['Content-Type' => $type . '; charset=' . strtoupper($charset)];
-	
+
 	return array_merge($defaultHeaders, $headers);
 }
 
@@ -1026,21 +1026,21 @@ function isFromValidReferrer(?array $referrers = [], bool $nullable = false): bo
 	if (empty($referrers)) {
 		$referrers = [getUrlHost(url('/'))];
 	}
-	
+
 	$isFromValidReferrer = false;
-	
+
 	$httpReferrer = request()->server('HTTP_REFERER');
 	if ($nullable && empty($httpReferrer)) {
 		return true;
 	}
-	
+
 	foreach ($referrers as $referrer) {
 		$isPattern = (
 			str_contains($referrer, 'https?')
 			|| str_contains($referrer, '.*')
 			|| str_contains($referrer, '\.')
 		);
-		
+
 		// Check to see what the referrer is
 		$isFromValidReferrer = $isPattern
 			? preg_match('|' . $referrer . '|ui', $httpReferrer)
@@ -1049,7 +1049,7 @@ function isFromValidReferrer(?array $referrers = [], bool $nullable = false): bo
 			break;
 		}
 	}
-	
+
 	return $isFromValidReferrer;
 }
 
@@ -1078,23 +1078,23 @@ function getFormattedThemes($theme = null, bool $iconOnly = false): array
 				'dark'   => '<i class="bi bi-moon-stars"></i>', // bi bi-moon | bi bi-moon-stars
 				'system' => '<i class="bi bi-circle-half"></i>', // bi bi-gear | bi bi-circle-half
 			];
-			
+
 			$icon = $themeIcons[$item['id'] ?? '-'] ?? $themeIcons['system'];
 			$item['label'] = $iconOnly ? $icon : $icon . '&nbsp;' . $item['label'];
-			
+
 			return $item;
 		})->reject(function ($item) {
 			$key = $item['id'] ?? '-';
-			
+
 			return (!isSettingsAppSystemThemeEnabled() && $key == 'system');
 		})->keyBy('id');
-	
+
 	if (!empty($theme)) {
 		$obj = $userThemes->get($theme);
-		
+
 		return is_array($obj) ? $obj : [];
 	}
-	
+
 	return $userThemes->toArray();
 }
 
@@ -1111,10 +1111,10 @@ function getThemePreference(): ?string
 			: ThemePreference::LIGHT->value;
 		$accountTheme = currentUserThemePreference();
 		$cookieTheme = currentDeviceThemePreference();
-		
+
 		return $accountTheme ?? $cookieTheme ?? $defaultTheme;
 	}
-	
+
 	return null;
 }
 
@@ -1128,7 +1128,7 @@ function currentUserThemePreference(): ?string
 	if (isSettingsAppDarkModeEnabled()) {
 		return auth()->user()?->theme_preference ?? null;
 	}
-	
+
 	return null;
 }
 
@@ -1142,7 +1142,7 @@ function currentDeviceThemePreference(): ?string
 	if (isSettingsAppDarkModeEnabled()) {
 		return Cookie::has('themePreference') ? Cookie::get('themePreference') : null;
 	}
-	
+
 	return null;
 }
 
@@ -1164,9 +1164,9 @@ function notification(
 {
 	if (isFromApi($request) || isFromAjax($request)) return;
 	if (empty($message)) return;
-	
+
 	$level = !empty($level) ? $level : 'info';
-	
+
 	/*
 	 * If the $targetUrl contains the "goTo=path/to/resource" parameter, retrieve it for the $goToUrl.
 	 */
@@ -1178,15 +1178,15 @@ function notification(
 		$request = is_null($request) ? request() : $request;
 		$goToPath = $request->input('goTo');
 	}
-	
+
 	$goToUrl = null;
 	if (!empty($goToPath)) {
 		$goToPath = ltrim($goToPath, '/');
 		$goToUrl = url($goToPath);
 	}
-	
+
 	$isFromAdminPanel = isAdminPanel($targetUrl);
-	
+
 	try {
 		if ($isFromAdminPanel) {
 			// Levels: success, error, warning, info
@@ -1217,11 +1217,11 @@ function doesClassUse($class, $trait, bool $recursively = false): bool
 	if (is_string($class)) {
 		$class = str($class)->start('\\')->toString();
 	}
-	
+
 	if (!is_object($class) && (is_string($class) && !class_exists($class))) {
 		return false;
 	}
-	
+
 	if ($recursively) {
 		try {
 			$reflectionClass = new ReflectionClass($class);
@@ -1230,15 +1230,15 @@ function doesClassUse($class, $trait, bool $recursively = false): bool
 				if (in_array($trait, $traits)) {
 					return true;
 				}
-				
+
 				$reflectionClass = $reflectionClass->getParentClass();
 			}
 		} catch (Throwable $e) {
 		}
-		
+
 		return false;
 	}
-	
+
 	return in_array($trait, class_uses($class));
 }
 
@@ -1254,22 +1254,22 @@ function staticMethodExists($class, string $method): bool
 	if (is_string($class)) {
 		$class = str($class)->start('\\')->toString();
 	}
-	
+
 	if (!is_object($class) && (is_string($class) && !class_exists($class))) {
 		return false;
 	}
-	
+
 	if (!method_exists($class, $method)) {
 		return false;
 	}
-	
+
 	try {
 		$reflectionMethod = new \ReflectionMethod($class, $method);
-		
+
 		return $reflectionMethod->isStatic();
 	} catch (Throwable $e) {
 	}
-	
+
 	return false;
 }
 
@@ -1282,11 +1282,11 @@ function staticMethodExists($class, string $method): bool
 function isMacroable($class): bool
 {
 	$trait = Macroable::class;
-	
+
 	$usesMacroableTrait = doesClassUse($class, $trait);
 	$macroFunctionExists = staticMethodExists($class, 'macro');
 	$isMacroable = ($usesMacroableTrait && $macroFunctionExists);
-	
+
 	$macroableCanBeBypassed = false;
 	if (class_exists($class)) {
 		/*
@@ -1296,19 +1296,19 @@ function isMacroable($class): bool
 		$bypassMacroableCheckFor = [
 			'\Illuminate\Database\Eloquent\Builder',
 		];
-		
+
 		try {
 			$reflectionClass = new ReflectionClass($class);
 			$namespace = $reflectionClass->getNamespaceName();
 			$className = $reflectionClass->getShortName();
 			$classFullName = $namespace . '\\' . $className;
 			$classFullName = str($classFullName)->start('\\')->toString();
-			
+
 			$macroableCanBeBypassed = in_array($classFullName, $bypassMacroableCheckFor);
 		} catch (Throwable $e) {
 		}
 	}
-	
+
 	return ($isMacroable || $macroableCanBeBypassed);
 }
 
@@ -1319,10 +1319,10 @@ function isMacroable($class): bool
 function getHtmlColor(?string $color): ?string
 {
 	if (empty($color)) return $color;
-	
+
 	$color = str($color);
 	$color = isHexColor($color) ? $color->start('#') : $color->ltrim('#');
-	
+
 	return $color->toString();
 }
 
@@ -1337,9 +1337,9 @@ function getHtmlColor(?string $color): ?string
 function getServiceData(?JsonResponse $data, bool $assoc = true): array
 {
 	if (!($data instanceof JsonResponse)) return [];
-	
+
 	$data = $data->getData($assoc);
-	
+
 	return is_array($data) ? $data : [];
 }
 
@@ -1356,23 +1356,23 @@ function normalizeFilename(string $originalName, ?string $name = null): string
 	$filenameWithoutExtension = str_contains($originalName, '.')
 		? pathinfo($originalName, PATHINFO_FILENAME)
 		: $originalName;
-	
+
 	$filenameWithoutExtension = str($filenameWithoutExtension)
 		->slug()
 		->take(100)
 		->trim('-')
 		->toString();
-	
+
 	$randomIntLength = 4;
-	
+
 	if (!empty($name)) {
 		$filenameWithoutExtension = $name;
 		$randomIntLength = 12;
 	}
-	
+
 	$randomInt = generateRandomString(length: $randomIntLength, type: 'numeric');
 	$filenameWithoutExtension = $filenameWithoutExtension . '-' . $randomInt;
-	
+
 	return str($filenameWithoutExtension)->trim('-')->toString();
 }
 
@@ -1388,7 +1388,7 @@ function addMaskToString(string $string, int $keepRgt = 0, int $keepLft = 0): st
 {
 	$charsToShowRgt = $keepRgt - str($string)->length();
 	$charsToShowLft = str($string)->length() - $keepLft;
-	
+
 	return str($string)->mask('*', $charsToShowRgt, $charsToShowLft)->toString();
 }
 
@@ -1400,13 +1400,13 @@ function getFlashNotificationData(): array
 	if (!session()->has('flash_notification')) {
 		return [];
 	}
-	
+
 	/** @var Collection $flashCollection */
 	$flashCollection = session('flash_notification');
-	
+
 	/** @var \Laracasts\Flash\Message $flashMessage */
 	$flashMessage = $flashCollection->get(0);
-	
+
 	// Level to method mapping
 	$levelList = [
 		'info'    => 'info',
@@ -1414,14 +1414,14 @@ function getFlashNotificationData(): array
 		'danger'  => 'error',
 		'warning' => 'warning',
 	];
-	
+
 	if (empty($flashMessage->message)) {
 		return [];
 	}
-	
+
 	$level = $flashMessage->level ?? 'info';
 	$method = array_key_exists($level, $levelList) ? $levelList[$level] : 'info';
-	
+
 	return [
 		'message' => $flashMessage->message,
 		'method'  => $method,
@@ -1449,7 +1449,7 @@ function getFlashNotificationData(): array
 function arrayFieldToDotNotation(?string $field, bool $rootWildcard = false): string
 {
 	if (empty($field)) return '';
-	
+
 	try {
 		// Split on "[" or "]", drop empty segments, then join with dots
 		$segments = preg_split('/[\[\]]+/', $field, -1, PREG_SPLIT_NO_EMPTY);
@@ -1457,13 +1457,13 @@ function arrayFieldToDotNotation(?string $field, bool $rootWildcard = false): st
 	} catch (\Throwable $e) {
 		$converted = str_replace(['[]', '][', '[', ']'], ['', '.', '.', ''], $fieldName);
 	}
-	
+
 	if ($rootWildcard) {
 		// Convert to wildcard notation by keeping only the first part
 		$parts = explode('.', $converted);
 		$converted = $parts[0] . '.*';
 	}
-	
+
 	return is_string($converted) ? $converted : '';
 }
 
@@ -1474,7 +1474,7 @@ function arrayFieldToDotNotation(?string $field, bool $rootWildcard = false): st
  * @param bool $snakeCase If true, replace dashes with underscores.
  * @return array                   Unique, indexed list of helper names.
  */
-function getViewHelpersNames(string $path = null, bool $snakeCase = false): array
+function getViewHelpersNames(?string $path = null, bool $snakeCase = false): array
 {
 	// Define custom slots
 	// Note: Some entries have been added to the list below only for reorder purpose.
@@ -1491,32 +1491,32 @@ function getViewHelpersNames(string $path = null, bool $snakeCase = false): arra
 		'intl_tel_input',
 		'shared_iti',
 	];
-	
+
 	// Initialize with custom slots mapped to _assets
 	$helpers = array_map(fn ($slot) => "{$slot}_assets", $customSlots);
-	
+
 	// Set default path if not provided
 	$path = $path ?? resource_path('views/helpers/forms/fields');
-	
+
 	// Get all files from path
 	$files = File::allFiles($path);
-	
+
 	// Process files once for both _assets and _helper suffixes
 	foreach ($files as $file) {
 		$name = str_replace(['.blade.php', '.php'], '', $file->getRelativePathname());
 		$name = $snakeCase ? str_replace('-', '_', $name) : $name;
-		
+
 		$_assets = "{$name}_assets";
 		if (!in_array($_assets, $helpers)) {
 			$helpers[] = $_assets;
 		}
-		
+
 		$_helper = "{$name}_helper";
 		if (!in_array($_helper, $helpers)) {
 			$helpers[] = $_helper;
 		}
 	}
-	
+
 	// Return unique helper names
 	return array_unique($helpers);
 }
@@ -1530,33 +1530,33 @@ function getViewHelpersNames(string $path = null, bool $snakeCase = false): arra
 function validateCacheDriver(?string $driver = null, ?string $fallbackDriver = null): string
 {
 	$fallbackDriver = empty($fallbackDriver) ? 'file' : $fallbackDriver;
-	
+
 	if (empty($driver)) return $fallbackDriver;
-	
+
 	$cacheDrivers = (array)config('larapen.options.cache');
 	if (!array_key_exists($driver, $cacheDrivers)) {
 		return $fallbackDriver;
 	}
-	
+
 	$rules = [
 		'redis'     => (extension_loaded('redis') && class_exists('\Redis')),
 		'memcached' => (extension_loaded('memcached') && class_exists('\Memcached')),
 		'apc'       => (extension_loaded('apc') || extension_loaded('apcu')),
 	];
-	
+
 	$validatedDrivers = collect($cacheDrivers)
 		->map(function ($item, $key) use ($rules) {
 			return !array_key_exists($key, $rules) || $rules[$key];
 		})->toArray();
-	
+
 	$isValid = $validatedDrivers[$driver] ?? false;
-	
+
 	if (!$isValid) {
 		$message = "The server component/extension for the '<strong>$driver</strong>' cache driver is not installed or not enabled.";
 		$message .= " Please contact your system administrator.";
 		$message .= " If you prefer to switch to a different cache driver and remove the error, you can update your .env file by setting the CACHE_STORE value (e.g. <strong>CACHE_STORE=file</strong>).";
 		throw new CustomException($message);
 	}
-	
+
 	return $driver;
 }
