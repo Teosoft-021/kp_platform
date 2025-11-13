@@ -118,7 +118,8 @@
 			"Larapen\\Impersonate\\": "packages/lab404/laravel-impersonate/src/",
 			"Larapen\\LaravelDistance\\": "packages/larapen/laravel-distance/src/",
 			"Larapen\\TextToImage\\": "packages/larapen/texttoimage/src/",
-			"LarapenIlluminate\\": "packages/laravel/framework/src/Illuminate/"
+			"LarapenIlluminate\\": "packages/laravel/framework/src/Illuminate/",
+			"Modules\\": "Modules/"
 		},
 		"exclude-from-classmap": [
 			"extras/plugins/adyen/app/Helpers/adyen-php",
