@@ -55,6 +55,7 @@
 		"mailersend/laravel-driver": "^2.8",
 		"mayeulak/breadcrumbs": "^1.0",
 		"mews/purifier": "^3.4",
+		"nwidart/laravel-modules": "^12.0",
 		"paypal/paypal-checkout-sdk": "^1.0",
 		"predis/predis": "^2.3",
 		"prologue/alerts": "^1.3",
@@ -117,7 +118,8 @@
 			"Larapen\\Impersonate\\": "packages/lab404/laravel-impersonate/src/",
 			"Larapen\\LaravelDistance\\": "packages/larapen/laravel-distance/src/",
 			"Larapen\\TextToImage\\": "packages/larapen/texttoimage/src/",
-			"LarapenIlluminate\\": "packages/laravel/framework/src/Illuminate/"
+			"LarapenIlluminate\\": "packages/laravel/framework/src/Illuminate/",
+			"Modules\\": "Modules/"
 		},
 		"exclude-from-classmap": [
 			"extras/plugins/adyen/app/Helpers/adyen-php",
@@ -170,7 +172,8 @@
 		"sort-packages": true,
 		"allow-plugins": {
 			"pestphp/pest-plugin": true,
-			"php-http/discovery": true
+			"php-http/discovery": true,
+			"wikimedia/composer-merge-plugin": true
 		}
 	},
 	"minimum-stability": "dev",
