@@ -6,21 +6,19 @@ services:
             context: .
             dockerfile: .server/docker/Dockerfile
             args:
-                APP_UID: 1000 # Set this to your host UID: run `id -u` in terminal
-                APP_GID: 1000 # Set this to your host GID: run `id -g`
+                APP_UID: ${APP_UID:-1000} # Set this to your host UID: run `id -u` in terminal
+                APP_GID: ${APP_GID:-1000} # Set this to your host GID: run `id -g`
         volumes:
             - ./:/app
             - ./.server/php/99-app.ini:/usr/local/etc/php/conf.d/99-app.ini
         working_dir: /app
         # TIP: Get your UID/GID with `id -u` and `id -g` on Linux/macOS
-        user: "1000:1000" # Same here: match your host UID:GID
+        user: "${APP_UID:-1000}:${APP_GID:-1000}" # Same here: match your host UID:GID
         depends_on:
             mysql:
                 condition: service_healthy
         environment:
             LARAVEL_ENV_ENCRYPTION_KEY:
-            APP_UID: 1000
-            APP_GID: 1000
         networks:
             - kp-platform-network
         extra_hosts:
