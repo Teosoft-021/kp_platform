@@ -4,3 +4,4 @@ public/webcron.php
 storage/installed
 public/robots.txt
 vendor
+compose.override.yaml
