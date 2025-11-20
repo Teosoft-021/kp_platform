@@ -23,35 +23,35 @@ class DatabaseSeeder extends Seeder
 	{
 		// Code start execution time
 		$startTime = now();
-		
+
 		// Disable foreign key constraints (Temporarily)
 		Schema::disableForeignKeyConstraints();
-		
+
 		// Truncate all tables
 		$prefix = DB::getTablePrefix();
 		$tables = DBUtils::getDatabaseTables($prefix, withPrefix: false);
 		if (count($tables) > 0) {
 			foreach ($tables as $table) {
 				$rawTable = $prefix . $table;
-				
+
 				DB::statement('ALTER TABLE ' . $rawTable . ' AUTO_INCREMENT=1;');
-				
+
 				// Don't truncate some tables (eg. migrations, ...)
 				if ($table == 'migrations' || $table == 'users') {
 					continue;
 				}
-				
+
 				// Don't truncate the 'blacklist' table in production (or in other environment than local)
 				if (!isLocalEnv()) {
 					if ($table == 'blacklist') {
 						continue;
 					}
 				}
-				
+
 				DB::table($table)->truncate();
 			}
 		}
-		
+
 		// Run Default Seeders
 		$this->call(MenuSeeder::class);
 		$this->call(LanguageSeeder::class);
@@ -68,7 +68,8 @@ class DatabaseSeeder extends Seeder
 		$this->call(SettingSeeder::class);
 		$this->call(CategoryFieldSeeder::class);
 		$this->call(CountrySeeder::class);
-		
+		$this->call(PostSeeder::class);
+
 		$isDevOrDemoEnv = (isDevEnv() || isDemoEnv());
 		$shouldSeedDemoData = ($isDevOrDemoEnv && !isFromInstallProcess());
 		if ($shouldSeedDemoData) {
@@ -87,27 +88,27 @@ class DatabaseSeeder extends Seeder
 				'\Database\Seeders\Factories\MessengerSeeder',
 				'\Database\Seeders\Factories\BlacklistSeeder',
 			];
-			
+
 			foreach ($factoriesSeeders as $seeder) {
 				if (str_contains($seeder, 'BlacklistSeeder')) {
 					if (isLocalEnv()) {
 						continue;
 					}
 				}
-				
+
 				if (class_exists($seeder)) {
 					$this->call($seeder);
 				}
 			}
 		}
-		
+
 		// Re-Enable back foreign key constraints
 		Schema::enableForeignKeyConstraints();
-		
+
 		// Get the code's execution's duration
 		$this->execTimeLog($startTime->diffForHumans(now(), CarbonInterface::DIFF_ABSOLUTE, false, 3));
 	}
-	
+
 	/**
 	 * Code Execution Time Log
 	 *
@@ -117,7 +118,7 @@ class DatabaseSeeder extends Seeder
 	private function execTimeLog($message): void
 	{
 		$message = 'Execution Time: ' . $message;
-		
+
 		$this->command->info($message);
 		logger()->channel('seeder')->info($message);
 	}
