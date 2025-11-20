@@ -68,7 +68,6 @@ class DatabaseSeeder extends Seeder
 		$this->call(SettingSeeder::class);
 		$this->call(CategoryFieldSeeder::class);
 		$this->call(CountrySeeder::class);
-		$this->call(PostSeeder::class);
 
 		$isDevOrDemoEnv = (isDevEnv() || isDemoEnv());
 		$shouldSeedDemoData = ($isDevOrDemoEnv && !isFromInstallProcess());

@@ -1,9 +1,9 @@
 <?php
 
-namespace Database\Seeders;
+namespace Modules\Custom\Database\Seeders;
 
-use Database\Factories\PostFactory;
 use Illuminate\Database\Seeder;
+use Modules\Custom\Database\Factories\PostFactory;
 
 class PostSeeder extends Seeder
 {
