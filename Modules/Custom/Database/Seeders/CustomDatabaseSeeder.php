@@ -18,7 +18,7 @@ class CustomDatabaseSeeder extends Seeder
         Schema::disableForeignKeyConstraints();
 
         // Truncate all tables
-        $tables = ['posts'];
+        $tables = ['posts', 'users'];
         if (count($tables) > 0) {
             foreach ($tables as $table) {
                 DB::table($table)->truncate();
@@ -28,6 +28,7 @@ class CustomDatabaseSeeder extends Seeder
         Schema::enableForeignKeyConstraints();
 
         $this->call([
+            UserSeeder::class,
             PostSeeder::class,
         ]);
     }

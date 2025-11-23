@@ -3,6 +3,7 @@
 namespace Modules\Custom\Database\Factories;
 
 use App\Models\Post;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Carbon;
 
@@ -32,5 +33,40 @@ class PostFactory extends Factory
             'email_verified_at' => Carbon::now()->subDay(),
             'phone_verified_at' => Carbon::now()->subDay(),
         ];
+    }
+
+    public function forCountry(string $countryCode): self
+    {
+        return $this->state([
+            'country_code' => $countryCode,
+        ]);
+    }
+
+    public function forUser(int $userId): self
+    {
+        return $this->state([
+            'user_id' => $userId,
+        ]);
+    }
+
+    public function forCategory(int $categoryId): self
+    {
+        return $this->state([
+            'category_id' => $categoryId,
+        ]);
+    }
+
+    public function forCurrency(string $currencyCode): self
+    {
+        return $this->state([
+            'currency_code' => $currencyCode,
+        ]);
+    }
+
+    public function forCity(int $cityId): self
+    {
+        return $this->state([
+            'city_id' => $cityId,
+        ]);
     }
 }
