@@ -3,6 +3,7 @@
 namespace Modules\Custom\Providers;
 
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
@@ -21,6 +22,8 @@ class CustomServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        $this->overrideViews();
+
         $this->registerCommands();
         $this->registerCommandSchedules();
         $this->registerTranslations();
@@ -36,6 +39,16 @@ class CustomServiceProvider extends ServiceProvider
     {
         $this->app->register(EventServiceProvider::class);
         $this->app->register(RouteServiceProvider::class);
+    }
+
+    protected function overrideViews()
+    {
+        $overridesPath = module_path('Custom', 'resources/views/overrides');
+
+        View::getFinder()->prependLocation($overridesPath);
+
+        // DODATNO: Ako koriste neki custom namespace (provjeri u njihovom kodu)
+        // View::prependNamespace('laraclassifier', [$overridesPath]);
     }
 
     /**
