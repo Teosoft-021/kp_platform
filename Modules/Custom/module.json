@@ -5,7 +5,8 @@
     "keywords": [],
     "priority": 0,
     "providers": [
-        "Modules\\Custom\\Providers\\CustomServiceProvider"
+        "Modules\\Custom\\Providers\\CustomServiceProvider",
+        "Modules\\Custom\\Providers\\OverwriteServiceProvider"
     ],
     "files": []
 }
